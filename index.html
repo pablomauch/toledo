@@ -4,177 +4,311 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#1d1712">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Toledo">
+<meta name="theme-color" content="#140f0b">
 <title>Toledo a pie · Audioguía</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400;1,9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#1d1712;--card:#2a221b;--card2:#342a21;--ink:#f3eadf;--mute:#b9a993;--gold:#d9a54a;--terra:#c8643b;--ok:#7fb27a;--warn:#e0a03a;--bad:#d9584a;--line:#4a3d31}
+:root{
+  --bg:#140f0b; --bg2:#1c1510; --card:#221a14; --card2:#2c221a; --line:rgba(255,236,210,.10);
+  --ink:#f7efe4; --mute:#bfae98; --gold:#e3b25a; --gold2:#f3cf86; --terra:#c75b34; --ok:#8cc084; --warn:#f0b13d; --bad:#e2604f;
+  --serif:"Fraunces",Georgia,serif; --sans:"Manrope",system-ui,sans-serif;
+  --st:env(safe-area-inset-top); --sb:env(safe-area-inset-bottom);
+}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:16px;line-height:1.5}
-body{padding:env(safe-area-inset-top) 0 calc(96px + env(safe-area-inset-bottom))}
-h1,h2,h3{font-family:"Cormorant Garamond",Georgia,serif;margin:0;line-height:1.1}
-button{font:inherit;color:inherit;border:0;cursor:pointer}
-a{color:var(--gold)}
-.wrap{max-width:560px;margin:0 auto;padding:16px}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+a{color:inherit}
 .hidden{display:none!important}
-.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 16px;position:sticky;top:0;background:rgba(29,23,18,.94);backdrop-filter:blur(8px);z-index:5;border-bottom:1px solid var(--line)}
-.top .t{font-family:"Cormorant Garamond",serif;font-size:22px;font-weight:700;color:var(--gold)}
-.pill{font-size:12px;padding:4px 10px;border-radius:99px;background:var(--card2);color:var(--mute);white-space:nowrap}
-.pill.ok{color:#d7f0d4;background:#2f4a2d}.pill.warn{color:#2a1d07;background:var(--warn)}.pill.bad{color:#fff;background:var(--bad)}
-.hero{padding:28px 18px 8px;text-align:center}
-.hero h1{font-size:44px;color:var(--gold)}
-.hero p{color:var(--mute);margin:10px 0 0}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px 16px;border-radius:14px;background:var(--card2);font-weight:600;font-size:16px;text-decoration:none;color:var(--ink);border:1px solid var(--line)}
-.btn.primary{background:var(--terra);border-color:var(--terra);color:#fff}
-.btn.gold{background:var(--gold);border-color:var(--gold);color:#241a0d}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-.small{font-size:13px;color:var(--mute)}
-label.sel{display:block;margin:14px 0 6px;color:var(--mute);font-size:14px}
-select{width:100%;padding:13px;border-radius:12px;background:var(--card2);color:var(--ink);border:1px solid var(--line);font:inherit}
-.kicker{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);font-weight:600}
-.navname{font-size:34px;margin:4px 0 2px}
-.compass{width:190px;height:190px;margin:16px auto 6px;border-radius:50%;background:radial-gradient(circle at 50% 45%,#3b2f25,#231c16);border:2px solid var(--line);position:relative;display:flex;align-items:center;justify-content:center}
-.compass .n{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--mute)}
-#arrow{width:110px;height:110px;transition:transform .4s ease}
-.dist{text-align:center;font-size:30px;font-weight:600;margin-top:4px}
-.dist small{display:block;font-size:14px;color:var(--mute);font-weight:400}
-.dir{background:var(--card2);border-radius:12px;padding:12px 14px;margin-top:12px;font-size:15px}
-.dir b{color:var(--gold)}
-.badges{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.narr{font-size:17px;line-height:1.65;white-space:pre-line;margin-top:10px}
-.narr.clamp{max-height:9.5em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 60%,transparent)}
-.more{background:none;color:var(--gold);padding:6px 0;font-size:14px}
-.box{border-left:4px solid var(--gold);background:var(--card2);border-radius:10px;padding:12px 14px;margin-top:12px}
-.box.r{border-color:var(--terra)}
-.box h3{font-size:20px;margin-bottom:4px}
-.ans{margin-top:8px;color:var(--mute)}
-.list .it{display:flex;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line)}
-.list .num{width:30px;height:30px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-weight:600;flex:none;font-size:14px}
-.list .it.done .num{background:var(--ok);color:#122}
-.list .it.cur .num{background:var(--terra);color:#fff}
-.list .nm{flex:1}
-.list .nm div{font-size:13px;color:var(--mute)}
-.player{position:fixed;left:0;right:0;bottom:0;background:#120e0b;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px;z-index:9}
-.player .np{flex:1;min-width:0;font-size:13px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.player .np b{color:var(--ink);font-weight:600}
-.pbtn{width:44px;height:44px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:18px;flex:none}
-.pbtn.on{background:var(--gold);color:#241a0d}
-.toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--gold);color:#241a0d;padding:10px 16px;border-radius:12px;font-weight:600;z-index:20;max-width:90%;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.4)}
-.tabs{display:flex;gap:8px;margin:6px 0 0}
-.tabs button{flex:1;padding:10px;border-radius:12px;background:var(--card2);font-weight:600;font-size:14px}
-.tabs button.on{background:var(--terra);color:#fff}
-.plan td{padding:6px 4px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
-.plan td:first-child{color:var(--gold);white-space:nowrap;font-weight:600}
+
+/* ============ LANDING ============ */
+#landing{position:relative;min-height:100svh;overflow:hidden}
+.slides{position:fixed;inset:0;z-index:0}
+.slide{position:absolute;inset:-4%;background-size:cover;background-position:center;opacity:0;transition:opacity 1.8s ease;will-change:transform,opacity}
+.slide.on{opacity:1;animation:kb 9s ease-out forwards}
+@keyframes kb{from{transform:scale(1.02) translate3d(0,0,0)}to{transform:scale(1.14) translate3d(-1.5%,-1%,0)}}
+.slide.alt.on{animation-name:kb2}
+@keyframes kb2{from{transform:scale(1.14) translate3d(1.5%,0,0)}to{transform:scale(1.03) translate3d(0,-1%,0)}}
+.shade{position:fixed;inset:0;z-index:1;background:
+  linear-gradient(180deg,rgba(20,15,11,.55) 0%,rgba(20,15,11,0) 26%,rgba(20,15,11,.15) 50%,rgba(20,15,11,.92) 78%,var(--bg) 100%)}
+.landing-inner{position:relative;z-index:2;min-height:100svh;display:flex;flex-direction:column;padding:calc(var(--st) + 18px) 22px calc(var(--sb) + 22px)}
+.brand{display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:var(--serif);font-style:italic;font-size:15px;letter-spacing:.02em;color:var(--gold2);display:flex;align-items:center;gap:8px}
+.logo i{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 4px rgba(227,178,90,.2)}
+.caption{font-size:12px;color:rgba(255,255,255,.75);background:rgba(0,0,0,.28);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);padding:6px 11px;border-radius:99px;transition:opacity .6s}
+.spacer{flex:1;min-height:38svh}
+.eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold2);font-weight:700}
+.title{font-family:var(--serif);font-weight:800;font-size:clamp(64px,22vw,120px);line-height:.86;letter-spacing:-.035em;margin:10px 0 6px;font-variation-settings:"opsz" 144}
+.title em{font-weight:400;font-style:italic;color:var(--gold2);letter-spacing:-.02em}
+.tagline{font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.3;color:#efe3d2;max-width:24ch;margin:6px 0 18px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.chip{font-size:13px;font-weight:600;padding:8px 13px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.cta{display:flex;align-items:center;justify-content:space-between;width:100%;padding:18px 22px;border-radius:20px;background:var(--gold);color:#22170a;font-weight:800;font-size:18px;box-shadow:0 14px 40px rgba(227,178,90,.35);transition:transform .15s}
+.cta:active{transform:scale(.98)}
+.cta span.arr{width:38px;height:38px;border-radius:50%;background:#22170a;color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:18px}
+.startfrom{margin-top:12px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--mute)}
+.startfrom select{flex:1;appearance:none;-webkit-appearance:none;background:rgba(255,255,255,.08);border:1px solid var(--line);color:var(--ink);padding:11px 14px;border-radius:12px;font:inherit;font-size:14px}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:18px}
+.dots b{width:6px;height:6px;border-radius:99px;background:rgba(255,255,255,.3);transition:all .5s}
+.dots b.on{width:22px;background:var(--gold)}
+.below{position:relative;z-index:2;background:var(--bg);padding:8px 22px calc(var(--sb) + 40px)}
+.sec-t{font-family:var(--serif);font-size:28px;font-weight:600;margin:26px 0 12px;letter-spacing:-.01em}
+.route{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -22px;padding:0 22px 6px;scrollbar-width:none}
+.route::-webkit-scrollbar{display:none}
+.rc{flex:none;width:68%;max-width:260px;scroll-snap-align:start;border-radius:18px;overflow:hidden;background:var(--card);border:1px solid var(--line)}
+.rc .ph{height:150px;background-size:cover;background-position:center;position:relative}
+.rc .ph .n{position:absolute;left:10px;top:10px;width:30px;height:30px;border-radius:50%;background:rgba(20,15,11,.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--gold2)}
+.rc .tx{padding:12px 14px 14px}
+.rc .tx b{font-family:var(--serif);font-weight:600;font-size:18px;display:block;line-height:1.15}
+.rc .tx span{font-size:12.5px;color:var(--mute)}
+.hours{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:6px 16px}
+.hr{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+.hr:last-child{border:0}
+.hr b{color:var(--gold2);min-width:74px;font-weight:700}
+.tips{color:var(--mute);font-size:14px;padding-left:18px;margin:0}
+.tips li{margin:6px 0}
+.credits{font-size:11px;color:#7d6f5e;margin-top:26px;line-height:1.5}
+
+/* ============ APP ============ */
+#app{min-height:100svh;padding-bottom:calc(var(--sb) + 92px)}
+.topbar{position:sticky;top:0;z-index:20;padding:calc(var(--st) + 10px) 16px 10px;background:linear-gradient(var(--bg) 70%,rgba(20,15,11,0));}
+.tb-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.tb-title{font-family:var(--serif);font-style:italic;font-weight:600;font-size:20px;color:var(--gold2)}
+.tb-right{display:flex;gap:6px;align-items:center}
+.pill{font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;background:var(--card2);color:var(--mute);white-space:nowrap;border:1px solid var(--line)}
+.pill.ok{color:#d9f2d4;background:rgba(140,192,132,.18);border-color:rgba(140,192,132,.35)}
+.pill.warn{color:#2a1d07;background:var(--warn);border-color:var(--warn)}
+.pill.bad{color:#fff;background:var(--bad);border-color:var(--bad)}
+.iconbtn{width:36px;height:36px;border-radius:50%;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px}
+.prog{display:flex;gap:4px;margin-top:10px}
+.prog i{flex:1;height:4px;border-radius:9px;background:rgba(255,255,255,.12);transition:background .4s}
+.prog i.d{background:var(--ok)}.prog i.c{background:var(--gold)}
+.wrap{max-width:560px;margin:0 auto;padding:0 16px}
+
+.hero{position:relative;border-radius:24px;overflow:hidden;min-height:260px;display:flex;align-items:flex-end;margin-top:4px;background:#2a2018}
+.hero .bg{position:absolute;inset:0;background-size:cover;background-position:center;transform:scale(1.04);animation:kb 14s ease-out forwards}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 30%,rgba(20,15,11,.92) 100%)}
+.hero .in{position:relative;z-index:2;padding:18px 18px 16px;width:100%}
+.kick{font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--gold2)}
+.hname{font-family:var(--serif);font-weight:800;font-size:38px;line-height:.98;letter-spacing:-.02em;margin:6px 0 10px}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+
+.panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;margin-top:12px}
+.navgrid{display:grid;grid-template-columns:132px 1fr;gap:16px;align-items:center}
+.compass{width:132px;height:132px;border-radius:50%;position:relative;background:radial-gradient(circle at 50% 40%,#3a2d22,#1b140f 70%);border:1px solid var(--line);box-shadow:inset 0 0 0 8px rgba(255,255,255,.02),0 10px 30px rgba(0,0,0,.35)}
+.compass .ring{position:absolute;inset:10px;border-radius:50%;border:1px dashed rgba(227,178,90,.25)}
+.compass .nm{position:absolute;top:5px;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;color:var(--mute)}
+#arrow{position:absolute;inset:22px;width:88px;height:88px;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.dnum{font-family:var(--serif);font-weight:800;font-size:46px;line-height:1;letter-spacing:-.02em}
+.dnum small{font-size:20px;font-weight:600;color:var(--mute);margin-left:3px}
+.dsub{color:var(--mute);font-size:14px;margin-top:6px}
+.dir{margin-top:16px;padding:14px;border-radius:16px;background:var(--card2);font-size:15px;line-height:1.55}
+.dir b{color:var(--gold2);font-weight:700}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:15px 12px;border-radius:16px;background:var(--card2);border:1px solid var(--line);font-weight:700;font-size:15px;text-decoration:none;color:var(--ink);transition:transform .12s}
+.btn:active{transform:scale(.97)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#22170a}
+.btn.terra{background:var(--terra);border-color:var(--terra);color:#fff}
+.btn.full{grid-column:1/-1}
+.note{font-size:13px;color:var(--mute);margin:12px 2px 0}
+
+.listen{display:flex;align-items:center;gap:14px;padding:14px;border-radius:18px;background:linear-gradient(135deg,#3a2a1c,#2a1f16);border:1px solid rgba(227,178,90,.25)}
+.listen .pl{width:54px;height:54px;border-radius:50%;background:var(--gold);color:#22170a;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none;box-shadow:0 8px 24px rgba(227,178,90,.35)}
+.listen .lt b{display:block;font-weight:700}
+.listen .lt span{font-size:13px;color:var(--mute)}
+.wave{display:flex;gap:3px;align-items:flex-end;height:20px;margin-left:auto}
+.wave i{width:3px;border-radius:3px;background:var(--gold);height:4px}
+.playing .wave i{animation:w 1s ease-in-out infinite}
+.wave i:nth-child(2){animation-delay:.15s}.wave i:nth-child(3){animation-delay:.3s}.wave i:nth-child(4){animation-delay:.45s}.wave i:nth-child(5){animation-delay:.6s}
+@keyframes w{0%,100%{height:4px}50%{height:20px}}
+.narr{font-family:var(--serif);font-size:19px;line-height:1.62;white-space:pre-line;margin-top:16px;color:#efe5d6}
+.narr.clamp{max-height:9.8em;overflow:hidden;-webkit-mask-image:linear-gradient(#000 55%,transparent)}
+.more{color:var(--gold2);font-weight:700;font-size:14px;padding:8px 0 0}
+.box{border-radius:18px;padding:16px;margin-top:12px;background:var(--card);border:1px solid var(--line)}
+.box h3{margin:0 0 6px;font-family:var(--serif);font-size:21px;font-weight:600}
+.box.reto{background:linear-gradient(135deg,rgba(199,91,52,.22),rgba(199,91,52,.06));border-color:rgba(199,91,52,.35)}
+.ans{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);color:var(--mute);font-size:15px}
+
+.list .it{display:flex;gap:14px;align-items:center;padding:10px;border-radius:16px;margin-bottom:8px;background:var(--card);border:1px solid var(--line)}
+.list .th{width:64px;height:64px;border-radius:12px;background-size:cover;background-position:center;flex:none;position:relative}
+.list .th .n{position:absolute;left:-6px;top:-6px;width:24px;height:24px;border-radius:50%;background:var(--card2);border:2px solid var(--bg);font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.list .it.done .n{background:var(--ok);color:#122}
+.list .it.cur{border-color:rgba(227,178,90,.55)}
+.list .it.cur .n{background:var(--gold);color:#22170a}
+.list .nm{flex:1;min-width:0}
+.list .nm b{font-family:var(--serif);font-weight:600;font-size:18px;display:block;line-height:1.15}
+.list .nm span{font-size:12.5px;color:var(--mute)}
+
+.player{position:fixed;left:12px;right:12px;bottom:calc(var(--sb) + 12px);z-index:30;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 12px;border-radius:22px;background:rgba(34,26,20,.82);backdrop-filter:blur(18px) saturate(1.3);-webkit-backdrop-filter:blur(18px) saturate(1.3);border:1px solid rgba(255,236,210,.14);box-shadow:0 16px 40px rgba(0,0,0,.45);max-width:536px;margin:0 auto}
+.pbtn{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:16px;flex:none;font-weight:800}
+.pbtn.main{background:var(--gold);color:#22170a}
+.np{flex:1;min-width:0;line-height:1.25}
+.np b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.np span{font-size:12px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s}
+.sheet-bg.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--bg2);border-radius:26px 26px 0 0;padding:10px 20px calc(var(--sb) + 22px);transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.8,.2,1);max-height:86svh;overflow:auto;border-top:1px solid var(--line)}
+.sheet.on{transform:none}
+.grab{width:42px;height:5px;border-radius:9px;background:rgba(255,255,255,.2);margin:0 auto 14px}
+.sheet h2{font-family:var(--serif);font-weight:600;font-size:26px;margin:0 0 4px}
+.vlist{margin-top:12px}
+.vopt{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:13px 14px;border-radius:14px;background:var(--card);border:1px solid var(--line);margin-bottom:8px}
+.vopt.on{border-color:var(--gold);background:rgba(227,178,90,.12)}
+.vopt .fl{font-size:22px}
+.vopt b{display:block;font-size:15px}
+.vopt span{font-size:12.5px;color:var(--mute)}
+.seg{display:flex;background:var(--card);border-radius:12px;padding:4px;border:1px solid var(--line);margin-top:8px}
+.seg button{flex:1;padding:9px;border-radius:9px;font-weight:700;font-size:14px;color:var(--mute)}
+.seg button.on{background:var(--gold);color:#22170a}
+.row-t{display:flex;justify-content:space-between;align-items:center;margin-top:18px;font-weight:700}
+.switch{width:52px;height:30px;border-radius:99px;background:var(--card2);position:relative;border:1px solid var(--line);transition:background .2s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch.on{background:var(--ok)}.switch.on::after{transform:translateX(22px)}
+
+.toast{position:fixed;left:50%;top:calc(var(--st) + 64px);transform:translate(-50%,-10px);opacity:0;background:var(--gold);color:#22170a;padding:12px 18px;border-radius:14px;font-weight:700;z-index:60;max-width:90%;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.4);transition:all .3s;pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.fade{animation:fi .45s ease both}
+@keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 </style>
 </head>
 <body>
 
-<!-- PANTALLA INICIO -->
-<section id="start">
-  <div class="hero">
-    <div class="kicker">Audioguía a pie · 3 a 4 horas</div>
-    <h1>Toledo<br>de las tres culturas</h1>
-    <p>Una ruta de 11 paradas, unos 3 km a pie, con la voz que les cuenta la historia al llegar y mientras caminan.</p>
+<!-- ================= LANDING ================= -->
+<section id="landing">
+  <div class="slides" id="slides"></div>
+  <div class="shade"></div>
+  <div class="landing-inner">
+    <div class="brand">
+      <div class="logo"><i></i>Audioguía a pie</div>
+      <div class="caption" id="cap">Toledo</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="eyebrow">Ciudad de las tres culturas</div>
+    <h1 class="title">Tole<em>do</em></h1>
+    <p class="tagline">Mil quinientos años de historia en una sola tarde, contados al oído.</p>
+    <div class="chips">
+      <span class="chip">🗺️ 11 paradas</span><span class="chip">🚶 ~3 km</span><span class="chip">⏱️ 3–4 h</span><span class="chip">🎧 Narrado</span>
+    </div>
+    <button class="cta" id="go"><span>Empezar el recorrido</span><span class="arr">→</span></button>
+    <div class="startfrom"><span>Desde</span><select id="startAt"></select></div>
+    <p class="startfrom" id="resumeNote" style="margin-top:8px"></p>
+    <div class="dots" id="dots"></div>
   </div>
-  <div class="wrap">
-    <div class="card">
-      <b>Antes de empezar</b>
-      <ul class="small" style="padding-left:18px;margin:8px 0 0">
-        <li>Pónganse los auriculares y suban el volumen.</li>
-        <li>Si el teléfono pide permiso de <b>ubicación</b> y <b>brújula</b>, acepten.</li>
-        <li>Dejen la pantalla encendida: si se bloquea, la voz se detiene.</li>
-        <li>Saquen la <b>pulsera turística</b> si van a entrar a varios monumentos (Cristo de la Luz, Santo Tomé, Santa María la Blanca, San Juan de los Reyes y otros).</li>
-      </ul>
-      <label class="sel" for="startAt">¿Por dónde empiezan?</label>
-      <select id="startAt"></select>
-      <div style="height:12px"></div>
-      <button class="btn primary" id="go">🎧 Empezar el recorrido</button>
-      <p class="small" id="resumeNote" style="margin:10px 0 0"></p>
+  <div class="below">
+    <h2 class="sec-t">El recorrido</h2>
+    <div class="route" id="route"></div>
+    <h2 class="sec-t">Hoy, lunes</h2>
+    <div class="hours">
+      <div class="hr"><b>10–17:45</b><span>Cristo de la Luz, Santo Tomé, Santa María la Blanca y San Juan de los Reyes</span></div>
+      <div class="hr"><b>10–18:30</b><span>Catedral · último acceso 18:00</span></div>
+      <div class="hr"><b>Cerrado</b><span>Sinagoga del Tránsito: se ve por fuera</span></div>
+      <div class="hr"><b>~17:55</b><span>Atardecer: final en el Puente de San Martín</span></div>
     </div>
-    <div class="card">
-      <b>Horarios de hoy (lunes)</b>
-      <table class="plan" style="width:100%;border-collapse:collapse;margin-top:8px">
-        <tr><td>10–17:45</td><td>Cristo de la Luz, Santo Tomé, Santa María la Blanca, San Juan de los Reyes</td></tr>
-        <tr><td>10–18:30</td><td>Catedral (último acceso 18:00)</td></tr>
-        <tr><td>Cerrado</td><td>Sinagoga del Tránsito (los lunes): solo por fuera</td></tr>
-        <tr><td>~17:55</td><td>Atardecer: ideal para terminar en el Puente de San Martín</td></tr>
-      </table>
-      <p class="small" style="margin:8px 0 0">La app les avisa en cada parada cuánto falta para que cierre.</p>
-    </div>
+    <h2 class="sec-t">Antes de salir</h2>
+    <ul class="tips">
+      <li>Auriculares puestos y volumen arriba.</li>
+      <li>Acepten los permisos de <b>ubicación</b> y <b>brújula</b>.</li>
+      <li>Pantalla encendida: si se bloquea, la voz se corta.</li>
+      <li>La <b>pulsera turística</b> cubre varios monumentos de la ruta.</li>
+      <li>Elijan la voz que más les guste en ⚙️ (arriba a la derecha, ya dentro).</li>
+    </ul>
+    <p class="credits" id="credits"></p>
   </div>
 </section>
 
-<!-- APP -->
+<!-- ================= APP ================= -->
 <section id="app" class="hidden">
-  <div class="top">
-    <div class="t">Toledo a pie</div>
-    <div style="display:flex;gap:6px;align-items:center">
-      <span class="pill" id="clock">--:--</span>
-      <span class="pill" id="gps">GPS…</span>
+  <div class="topbar">
+    <div class="tb-row">
+      <button class="tb-title" id="home">Toledo a pie</button>
+      <div class="tb-right">
+        <span class="pill" id="clock">--:--</span>
+        <span class="pill" id="gps">GPS…</span>
+        <button class="iconbtn" id="bList" aria-label="Recorrido">☰</button>
+        <button class="iconbtn" id="bSet" aria-label="Ajustes">⚙️</button>
+      </div>
     </div>
+    <div class="prog" id="prog"></div>
   </div>
-  <div class="wrap">
-    <div class="tabs">
-      <button id="tabGuide" class="on">Guía</button>
-      <button id="tabList">Recorrido</button>
-    </div>
 
+  <div class="wrap">
     <!-- CAMINANDO -->
-    <div id="walk" class="card">
-      <div class="kicker" id="wKick">Próxima parada</div>
-      <h2 class="navname" id="wName"></h2>
-      <div class="badges" id="wBadges"></div>
-      <div class="compass" aria-hidden="true">
-        <span class="n" id="northMark">N</span>
-        <svg id="arrow" viewBox="0 0 100 100"><path d="M50 6 L80 82 L50 66 L20 82 Z" fill="#d9a54a" stroke="#241a0d" stroke-width="2"/></svg>
+    <div id="walk">
+      <div class="hero fade" id="wHero"><div class="bg" id="wBg"></div>
+        <div class="in"><div class="kick" id="wKick"></div><div class="hname" id="wName"></div><div class="badges" id="wBadges"></div></div>
       </div>
-      <div class="dist" id="wDist">—<small id="wDistSub">Esperando ubicación…</small></div>
-      <div class="dir" id="wDir"></div>
-      <div class="row">
-        <button class="btn" id="bLeg">🎧 Historia del camino</button>
-        <a class="btn" id="bMaps" target="_blank" rel="noopener">🗺️ Abrir en Maps</a>
+      <div class="panel">
+        <div class="navgrid">
+          <div class="compass"><div class="ring"></div><span class="nm" id="northMark">N</span>
+            <svg id="arrow" viewBox="0 0 100 100"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3cf86"/><stop offset="1" stop-color="#c98f2f"/></linearGradient></defs><path d="M50 6 L80 84 L50 66 L20 84 Z" fill="url(#ag)"/></svg>
+          </div>
+          <div><div class="dnum" id="wDist">—</div><div class="dsub" id="wDistSub">Buscando ubicación…</div></div>
+        </div>
+        <div class="dir" id="wDir"></div>
+        <div class="btns">
+          <a class="btn" id="bMaps" target="_blank" rel="noopener">🗺️ Maps</a>
+          <button class="btn" id="bLeg">🎧 Historia</button>
+          <button class="btn gold full" id="bArrive">📍 Llegamos</button>
+        </div>
+        <p class="note" id="manualNote"></p>
+        <button class="more" id="bSkip" style="display:block;margin:6px auto 0;color:var(--mute)">Saltar esta parada ⏭</button>
       </div>
-      <div class="row">
-        <button class="btn gold" id="bArrive">📍 Llegamos</button>
-        <button class="btn" id="bSkip">⏭️ Saltar parada</button>
-      </div>
-      <p class="small" id="manualNote" style="margin:10px 0 0"></p>
     </div>
 
     <!-- EN LA PARADA -->
-    <div id="stop" class="card hidden">
-      <div class="kicker" id="sKick"></div>
-      <h2 class="navname" id="sName"></h2>
-      <div class="badges" id="sBadges"></div>
-      <div class="row" style="margin-top:4px">
-        <button class="btn primary" id="bPlay">▶️ Escuchar</button>
-        <button class="btn" id="bReplay">🔁 Desde el inicio</button>
+    <div id="stop" class="hidden">
+      <div class="hero fade" style="min-height:330px"><div class="bg" id="sBg"></div>
+        <div class="in"><div class="kick" id="sKick"></div><div class="hname" id="sName"></div><div class="badges" id="sBadges"></div></div>
       </div>
-      <div class="narr clamp" id="sNarr"></div>
-      <button class="more" id="bMore">Leer todo ▾</button>
-      <div class="box" id="sReto"><h3>🎯 Reto</h3><div id="sRetoTxt"></div><button class="more" id="bAns">Ver respuesta</button><div class="ans hidden" id="sAns"></div></div>
-      <div class="box r" id="sTip"><h3>💡 Datos prácticos</h3><div id="sTipTxt"></div></div>
-      <div style="height:12px"></div>
-      <button class="btn gold" id="bNext">Siguiente parada →</button>
+      <div class="panel">
+        <button class="listen" id="bPlay" style="width:100%;text-align:left">
+          <span class="pl" id="plIcon">▶</span>
+          <span class="lt"><b id="plTitle">Escuchar la historia</b><span id="plSub">Narración completa · ~3 min</span></span>
+          <span class="wave"><i></i><i></i><i></i><i></i><i></i></span>
+        </button>
+        <div class="narr clamp" id="sNarr"></div>
+        <button class="more" id="bMore">Leer todo ▾</button>
+      </div>
+      <div class="box reto"><h3>🎯 Reto</h3><div id="sRetoTxt"></div><button class="more" id="bAns">Ver respuesta</button><div class="ans hidden" id="sAns"></div></div>
+      <div class="box"><h3>💡 Datos prácticos</h3><div id="sTipTxt" style="color:var(--mute);font-size:15px"></div></div>
+      <div class="btns" style="margin-top:14px"><button class="btn gold full" id="bNext"></button></div>
     </div>
 
     <!-- LISTA -->
-    <div id="list" class="card list hidden"></div>
+    <div id="list" class="list hidden" style="margin-top:6px"></div>
   </div>
 </section>
 
 <div class="player hidden" id="player">
-  <button class="pbtn" id="pPause" aria-label="Pausa">⏸</button>
-  <div class="np" id="np"><b>Listo</b></div>
-  <button class="pbtn" id="pRate" aria-label="Velocidad" style="font-size:13px;font-weight:700">1×</button>
-  <button class="pbtn on" id="pAuto" aria-label="Voz automática" title="Voz automática">🔊</button>
+  <button class="pbtn main" id="pPause" aria-label="Pausa">⏸</button>
+  <div class="np"><b id="npT">Listo</b><span id="npS"></span></div>
+  <button class="pbtn" id="pBack" aria-label="Repetir frase">↺</button>
+  <button class="pbtn" id="pStop" aria-label="Detener">■</button>
 </div>
-<div class="toast hidden" id="toast"></div>
+
+<!-- AJUSTES -->
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="sheet">
+  <div class="grab"></div>
+  <h2>La voz de la guía</h2>
+  <p style="color:var(--mute);font-size:14px;margin:0">Las voces vienen de su teléfono. Las latinoamericanas aparecen primero.</p>
+  <div class="vlist" id="vlist"></div>
+  <div class="row-t">Velocidad</div>
+  <div class="seg" id="rateSeg"><button data-r="0.9">Lenta</button><button data-r="1">Normal</button><button data-r="1.1">Ágil</button></div>
+  <div class="row-t">Narrar automáticamente <button class="switch on" id="autoSw" aria-label="Voz automática"></button></div>
+  <p style="color:var(--mute);font-size:13px;margin:6px 0 0">Cuando llegan a una parada o empiezan un tramo, la historia arranca sola.</p>
+  <div class="box" style="margin-top:16px"><b>¿Quieren una voz más natural?</b>
+    <div style="color:var(--mute);font-size:14px;margin-top:6px">En iPhone: <b>Ajustes → Accesibilidad → Contenido leído → Voces → Español</b>. Descarguen una voz <b>Mejorada</b> o <b>Premium</b> de México (p. ej. Paulina) y reabran la app. En Android: Ajustes → Texto a voz → Google → instalar español (EE. UU.).</div></div>
+  <div class="btns"><button class="btn full" id="bTest">🔊 Probar voz</button></div>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-/* ======================= CONTENIDO ======================= */
 const STOPS = [
 {
  id:"bisagra", name:"Puerta de Bisagra", lat:39.86246, lng:-4.02519, r:45, closes:null, visit:10,
@@ -399,236 +533,248 @@ Hoy caminaron por Roma, por los visigodos, por al-Ándalus, por la judería, por
 ];
 const INTRO = "Hola. Soy su guía por Toledo. Durante las próximas horas los voy a ir llevando de parada en parada. Mientras caminen, les cuento historias del camino; cuando lleguen, les cuento la historia del lugar. Si tienen ubicación activada, yo me doy cuenta sola de que llegaron. Si no, toquen el botón Llegamos. Vamos.";
 
+
+
+/* ======================= FOTOS (Wikimedia Commons) ======================= */
+const WM = f => "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(f) + "?width=1400";
+const PH = {
+  pano:   WM("Toledo Skyline Panorama, Spain - Dec 2006.jpg"),
+  valle:  WM("Toledo - Panorama desde Mirador del Valle.jpg"),
+  sky:    WM("Toledo Skyline (4280718845).jpg"),
+  puente: WM("Puente de San Martín. Toledo, Spain.jpg"),
+  cate:   WM("FP Toledo Cathedral 2025 - West façade.jpg"),
+  comercio: WM("Catedral de Toledo, desde la Calle Comercio.JPG"),
+  sanjuan: WM("Claustro del monasterio de San Juan de los Reyes, Toledo, España..jpg"),
+  blanca: WM("Santa María la Blanca - Arcos.jpg"),
+  bisagra: WM("Puerta Nueva de Bisagra, Toledo.jpg"),
+  bisagraPatio: WM("Puerta Nueva de Bisagra (Toledo). Patio.jpg"),
+  sagra: WM("Puerta de la Sagra (Bab-Shagra), Toledo.jpg")
+};
+const IMG = { bisagra:PH.bisagra, sol:PH.valle, cristo:PH.sky, zoco:PH.valle, alcazar:PH.pano, catedral:PH.cate, santotome:PH.comercio, transito:PH.sky, blanca:PH.blanca, sanjuan:PH.sanjuan, puente:PH.puente };
+const SLIDES = [
+  [PH.pano,"Toledo al amanecer · Alcázar y Catedral"],
+  [PH.cate,"Catedral Primada · 800 años"],
+  [PH.blanca,"Santa María la Blanca"],
+  [PH.sanjuan,"Claustro de San Juan de los Reyes"],
+  [PH.puente,"Puente de San Martín sobre el Tajo"],
+  [PH.bisagra,"Puerta de Bisagra"],
+  [PH.valle,"Toledo desde el Mirador del Valle"]
+];
+const SHORT = { bisagra:"La puerta imperial de Carlos V", sol:"Mudéjar, siglo XIV", cristo:"Una mezquita del año 999", zoco:"El corazón de la ciudad", alcazar:"La cima de Toledo", catedral:"Gótico · 800 años", santotome:"El Greco y el conde de Orgaz", transito:"La judería · por fuera", blanca:"Sinagoga del siglo XII", sanjuan:"Los Reyes Católicos", puente:"Atardecer sobre el Tajo" };
+
 /* ======================= ESTADO ======================= */
 const $ = s => document.querySelector(s);
-let idx = 0, mode = "walk", visited = {}, pos = null, heading = null, geoOK = false;
-let announced = {}, autoVoice = true, rate = 1.0, lastSpokenDist = null, arrivedLock = false;
-const store = { get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}} };
+let idx=0, mode="walk", visited={}, pos=null, heading=null, compassOn=false;
+let announced={}, autoVoice=true, rate=1.0, lastSpokenDist=null, view="guide";
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const prefs = store.get("toledo_prefs")||{};
+if(prefs.rate) rate=prefs.rate; if(prefs.auto===false) autoVoice=false;
+
+/* ======================= LANDING ======================= */
+(function landing(){
+  const box=$("#slides"), dots=$("#dots");
+  SLIDES.forEach((s,i)=>{ const d=document.createElement("div"); d.className="slide"+(i%2?" alt":""); d.style.backgroundImage=`url("${s[0]}")`; box.appendChild(d); dots.appendChild(document.createElement("b")); const im=new Image(); im.src=s[0]; });
+  let k=0; const els=box.children, ds=dots.children;
+  function show(n){ [...els].forEach((e,i)=>{ if(i===n){ e.classList.remove("on"); void e.offsetWidth; e.classList.add("on"); } else e.classList.remove("on"); }); [...ds].forEach((e,i)=>e.classList.toggle("on",i===n)); const c=$("#cap"); c.style.opacity=0; setTimeout(()=>{c.textContent=SLIDES[n][1]; c.style.opacity=1;},400); }
+  show(0); landing.t=setInterval(()=>{ if($("#landing").classList.contains("hidden")) return; k=(k+1)%SLIDES.length; show(k); },5200);
+  $("#route").innerHTML = STOPS.map((s,i)=>`<div class="rc"><div class="ph" style="background-image:url('${IMG[s.id]}')"><span class="n">${i+1}</span></div><div class="tx"><b>${s.name}</b><span>${SHORT[s.id]||""}</span></div></div>`).join("");
+  $("#credits").textContent = "Fotos: Wikimedia Commons (licencias CC BY / CC BY-SA), autores: Rafesmar, Weldon Kennedy, Ввласенко, Fernando, Querubin Saldaña, Bernard Gagnon, J. L. Filpo Cabana y otros. Algunas fotos de las paradas son vistas generales de la ciudad.";
+})();
 
 /* ======================= VOZ ======================= */
-const synth = window.speechSynthesis;
-let voice = null, queue = [], speaking = false, paused = false, nowLabel = "";
-function pickVoice(){
+const synth=window.speechSynthesis;
+let voice=null, voices=[], queue=[], cur="", speaking=false, paused=false, nowLabel="";
+const REG = {"es-MX":["🇲🇽","México"],"es-US":["🇺🇸","EE. UU. (latino)"],"es-419":["🌎","Latinoamérica"],"es-AR":["🇦🇷","Argentina"],"es-CL":["🇨🇱","Chile"],"es-CO":["🇨🇴","Colombia"],"es-PE":["🇵🇪","Perú"],"es-VE":["🇻🇪","Venezuela"],"es-UY":["🇺🇾","Uruguay"],"es-ES":["🇪🇸","España"]};
+const ORDER=["es-AR","es-CL","es-UY","es-419","es-MX","es-US","es-CO","es-PE","es-VE"];
+const norm=l=>(l||"").replace("_","-");
+function score(v){ const l=norm(v.lang); let i=ORDER.findIndex(o=>l.toLowerCase().startsWith(o.toLowerCase())); let s = i<0 ? (l.toLowerCase().startsWith("es-es")?50:60) : i*2; if(/premium|enhanced|mejorada|neural|natural|online/i.test(v.name)) s-=1.5; if(/eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|bad|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|bahh|fred|junior|kathy|ralph/i.test(v.name)) s+=30; return s; }
+function loadVoices(){
   if(!synth) return;
-  const vs = synth.getVoices();
-  const pref = ["es-ES","es_ES","es-MX","es-US","es"];
-  for(const p of pref){
-    const cands = vs.filter(v => (v.lang||"").replace("_","-").toLowerCase().startsWith(p.replace("_","-").toLowerCase()));
-    if(cands.length){
-      voice = cands.find(v=>/Mónica|Monica|Paulina|Marisol|Google|Premium|Enhanced|Neural/i.test(v.name)) || cands[0];
-      return;
-    }
-  }
+  voices = synth.getVoices().filter(v=>norm(v.lang).toLowerCase().startsWith("es")).sort((a,b)=>score(a)-score(b));
+  if(prefs.voice){ const v=voices.find(v=>v.name===prefs.voice); if(v) voice=v; }
+  if(!voice) voice=voices[0]||null;
+  renderVoices();
 }
-if(synth){ pickVoice(); synth.onvoiceschanged = pickVoice; }
+if(synth){ loadVoices(); synth.onvoiceschanged=loadVoices; setTimeout(loadVoices,800); }
+function renderVoices(){
+  const box=$("#vlist"); if(!box) return;
+  if(!voices.length){ box.innerHTML=`<div class="note">No se encontraron voces en español en este teléfono.</div>`; return; }
+  box.innerHTML = voices.slice(0,12).map((v,i)=>{ const l=norm(v.lang); const r=Object.keys(REG).find(k=>l.toLowerCase()===k.toLowerCase()); const [fl,rg]=r?REG[r]:["🌐",l];
+    return `<button class="vopt ${voice&&v.name===voice.name?"on":""}" data-i="${i}"><span class="fl">${fl}</span><span><b>${v.name.replace(/\(.*\)/,"").trim()}</b><span>${rg}${/premium|enhanced|mejorada|neural/i.test(v.name)?" · alta calidad":""}</span></span></button>`; }).join("");
+  box.querySelectorAll(".vopt").forEach(b=>b.onclick=()=>{ voice=voices[+b.dataset.i]; prefs.voice=voice.name; store.set("toledo_prefs",prefs); renderVoices(); say("Hola, soy su guía por Toledo. ¿Les gusta cómo sueno?","Prueba de voz"); });
+}
 function chunk(text){
-  const clean = text.replace(/<[^>]+>/g,"").replace(/\s+\n/g,"\n");
-  const parts = clean.replace(/([\.\?\!:])\s+/g,"$1|").split(/\||\n+/).map(s=>s.trim()).filter(Boolean);
+  const clean=text.replace(/<[^>]+>/g,"");
+  const parts=clean.replace(/([\.\?\!:])\s+/g,"$1|").split(/\||\n+/).map(s=>s.trim()).filter(Boolean);
   const out=[]; let buf="";
-  for(const p of parts){ if((buf+" "+p).length>220 && buf){out.push(buf);buf=p}else{buf=buf?buf+" "+p:p} }
-  if(buf) out.push(buf);
-  return out;
+  for(const p of parts){ if((buf+" "+p).length>200&&buf){out.push(buf);buf=p}else{buf=buf?buf+" "+p:p} }
+  if(buf) out.push(buf); return out;
 }
-function say(text,label,{interrupt=true}={}){
-  if(!synth){ toast("Este navegador no tiene voz; lean el texto en pantalla."); return; }
-  if(interrupt){ synth.cancel(); queue=[]; }
-  queue.push(...chunk(text));
-  nowLabel = label||"";
-  paused=false; updatePlayer();
-  if(!speaking || interrupt) next();
+function say(text,label){
+  if(!synth){ toast("Este navegador no tiene voz: lean el texto."); return; }
+  synth.cancel(); queue=chunk(text); nowLabel=label||""; paused=false; next();
 }
 function next(){
-  if(!queue.length){ speaking=false; updatePlayer(); return; }
-  speaking=true;
-  const u = new SpeechSynthesisUtterance(queue.shift());
-  if(voice) u.voice = voice;
-  u.lang = voice ? voice.lang : "es-ES";
-  u.rate = rate; u.pitch = 1;
-  u.onend = () => { if(!paused) next(); };
-  u.onerror = () => { speaking=false; updatePlayer(); };
+  if(!queue.length){ speaking=false; cur=""; updatePlayer(); return; }
+  speaking=true; cur=queue.shift();
+  const u=new SpeechSynthesisUtterance(cur);
+  if(voice){ u.voice=voice; u.lang=voice.lang; } else u.lang="es-MX";
+  u.rate=rate; u.pitch=1;
+  u.onend=()=>{ if(!paused && speaking) next(); };
+  u.onerror=e=>{ if(e.error!=="interrupted"&&e.error!=="canceled"){ speaking=false; updatePlayer(); } };
   synth.speak(u); updatePlayer();
 }
-function stopVoice(){ if(synth) synth.cancel(); queue=[]; speaking=false; paused=false; updatePlayer(); }
-function updatePlayer(){
-  $("#np").innerHTML = speaking ? `<b>${paused?"En pausa":"Narrando"}</b> · ${nowLabel}` : `<b>Listo</b> · ${STOPS[idx] ? STOPS[idx].name : ""}`;
-  $("#pPause").textContent = speaking ? (paused ? "▶️" : "⏸") : "⏹";
-}
-$("#pPause").onclick = () => {
-  if(!synth) return;
-  if(!speaking) return;
-  if(paused){ synth.resume(); paused=false; if(!synth.speaking) next(); }
-  else { synth.pause(); paused=true; }
+function stopVoice(){ speaking=false; queue=[]; paused=false; if(synth) synth.cancel(); updatePlayer(); }
+function togglePause(){
+  if(!speaking){ if(mode==="stop") say(STOPS[idx].narr,STOPS[idx].name); else legSay(); return; }
+  if(paused){ paused=false; synth.resume(); setTimeout(()=>{ if(!synth.speaking){ queue.unshift(cur); next(); } },250); }
+  else { paused=true; synth.pause(); }
   updatePlayer();
-};
-$("#pRate").onclick = () => { rate = rate===1 ? 1.15 : rate===1.15 ? 0.9 : 1; $("#pRate").textContent = (rate===1?"1":rate===1.15?"1.15":"0.9")+"×"; };
-$("#pAuto").onclick = () => { autoVoice=!autoVoice; $("#pAuto").classList.toggle("on",autoVoice); $("#pAuto").textContent = autoVoice?"🔊":"🔈"; toast(autoVoice?"Voz automática activada":"Voz automática apagada: toquen Escuchar"); };
+}
+function updatePlayer(){
+  const s=STOPS[idx]; const on=speaking&&!paused;
+  $("#pPause").textContent = on?"❚❚":"▶";
+  $("#npT").textContent = speaking ? (nowLabel||s.name) : (mode==="stop"?s.name:"Camino a "+s.name);
+  $("#npS").textContent = speaking ? (paused?"En pausa":"Narrando…") : "Toquen ▶ para escuchar";
+  $("#stop").classList.toggle("playing", on);
+  $("#plIcon").textContent = on?"❚❚":"▶";
+  $("#plTitle").textContent = on?"Narrando…":(paused?"Continuar":"Escuchar la historia");
+}
+$("#pPause").onclick=togglePause;
+$("#pStop").onclick=stopVoice;
+$("#pBack").onclick=()=>{ if(cur){ synth.cancel(); queue.unshift(cur); paused=false; setTimeout(next,80);} };
 
 /* ======================= GEO ======================= */
 const R=6371000, rad=d=>d*Math.PI/180;
 function dist(a,b){const dLat=rad(b.lat-a.lat),dLng=rad(b.lng-a.lng);const x=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
 function bearing(a,b){const y=Math.sin(rad(b.lng-a.lng))*Math.cos(rad(b.lat));const x=Math.cos(rad(a.lat))*Math.sin(rad(b.lat))-Math.sin(rad(a.lat))*Math.cos(rad(b.lat))*Math.cos(rad(b.lng-a.lng));return (Math.atan2(y,x)*180/Math.PI+360)%360;}
 const CARD=["norte","noreste","este","sureste","sur","suroeste","oeste","noroeste"];
-function relDir(b){
-  if(heading==null) return "hacia el "+CARD[Math.round(b/45)%8];
-  const d=(b-heading+360)%360;
-  if(d<30||d>330) return "al frente";
-  if(d<150) return "hacia su derecha";
-  if(d<=210) return "detrás de ustedes";
-  return "hacia su izquierda";
-}
+function relDir(b){ if(heading==null) return "hacia el "+CARD[Math.round(b/45)%8]; const d=(b-heading+360)%360; if(d<30||d>330) return "al frente"; if(d<150) return "hacia su derecha"; if(d<=210) return "detrás de ustedes"; return "hacia su izquierda"; }
 function startGeo(){
   if(!("geolocation" in navigator)){ geoFail("Sin GPS en este navegador"); return; }
-  try{
-    navigator.geolocation.watchPosition(p=>{
-      geoOK=true; pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy};
-      if(p.coords.heading!=null && !isNaN(p.coords.heading) && p.coords.speed>0.6 && !compassOn) heading=p.coords.heading;
+  try{ navigator.geolocation.watchPosition(p=>{
+      pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy};
+      if(!compassOn && p.coords.heading!=null && !isNaN(p.coords.heading) && p.coords.speed>0.6) heading=p.coords.heading;
       setGps(); tick();
-    }, e=>geoFail(e.code===1?"Ubicación denegada":"Sin señal GPS"), {enableHighAccuracy:true, maximumAge:4000, timeout:20000});
+    }, e=>geoFail(e.code===1?"Ubicación denegada":"Sin señal GPS"), {enableHighAccuracy:true,maximumAge:4000,timeout:20000});
   }catch(e){ geoFail("GPS bloqueado aquí"); }
 }
-function geoFail(msg){
-  geoOK=false; const g=$("#gps"); g.textContent="Modo manual"; g.className="pill warn";
-  $("#manualNote").innerHTML = `📍 ${msg}. Usen <b>Abrir en Maps</b> para la ruta y toquen <b>Llegamos</b> al llegar.`;
-  $("#wDistSub").textContent="Sin GPS: usen Maps para guiarse";
-}
-function setGps(){ const g=$("#gps"); if(!pos) return; g.textContent = "GPS ±"+Math.round(pos.acc)+" m"; g.className = "pill "+(pos.acc<40?"ok":"warn"); $("#manualNote").textContent = pos.acc>60 ? "La precisión del GPS es baja entre estas calles; si ya están en el lugar, toquen Llegamos." : ""; }
-let compassOn=false;
-function onOrient(e){
-  let h=null;
-  if(typeof e.webkitCompassHeading==="number") h=e.webkitCompassHeading;
-  else if(e.absolute && e.alpha!=null) h=(360-e.alpha)%360;
-  if(h!=null){ heading=h; compassOn=true; drawArrow(); }
-}
-async function startCompass(){
-  try{
-    if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission==="function"){
-      const r = await DeviceOrientationEvent.requestPermission(); if(r!=="granted") return;
-    }
-    window.addEventListener("deviceorientationabsolute", onOrient, true);
-    window.addEventListener("deviceorientation", onOrient, true);
-  }catch(e){}
-}
-let wakeLock=null;
-async function keepAwake(){ try{ if("wakeLock" in navigator){ wakeLock = await navigator.wakeLock.request("screen"); } }catch(e){} }
+function geoFail(msg){ const g=$("#gps"); g.textContent="Manual"; g.className="pill warn"; $("#manualNote").innerHTML=`📍 ${msg}. Usen <b>Maps</b> para la ruta y toquen <b>Llegamos</b> al llegar.`; $("#wDistSub").textContent="Sin GPS: guíense con Maps"; }
+function setGps(){ const g=$("#gps"); g.textContent="GPS ±"+Math.round(pos.acc)+"m"; g.className="pill "+(pos.acc<40?"ok":"warn"); $("#manualNote").textContent = pos.acc>60?"El GPS pierde precisión entre estas calles. Si ya están ahí, toquen Llegamos.":""; }
+function onOrient(e){ let h=null; if(typeof e.webkitCompassHeading==="number") h=e.webkitCompassHeading; else if(e.absolute&&e.alpha!=null) h=(360-e.alpha)%360; if(h!=null){ heading=h; compassOn=true; drawArrow(); } }
+async function startCompass(){ try{ if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==="function"){ const r=await DeviceOrientationEvent.requestPermission(); if(r!=="granted") return; } window.addEventListener("deviceorientationabsolute",onOrient,true); window.addEventListener("deviceorientation",onOrient,true); }catch(e){} }
+async function keepAwake(){ try{ if("wakeLock" in navigator) await navigator.wakeLock.request("screen"); }catch(e){} }
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") keepAwake(); });
 
 /* ======================= UI ======================= */
-function hhmm(d){return d.toTimeString().slice(0,5)}
-function minsUntil(t){const [h,m]=t.split(":").map(Number);const n=new Date();const c=new Date();c.setHours(h,m,0,0);return Math.round((c-n)/60000);}
+const hhmm=d=>d.toTimeString().slice(0,5);
+function minsUntil(t){const [h,m]=t.split(":").map(Number);const c=new Date();c.setHours(h,m,0,0);return Math.round((c-new Date())/60000);}
 function hoursBadge(s){
-  if(!s.closes) return `<span class="pill">Exterior · siempre abierto</span>`;
-  if(s.closes==="closed") return `<span class="pill bad">Hoy cerrado · solo por fuera</span>`;
-  const lim = s.lastEntry || s.closes;
-  const m = minsUntil(lim);
-  if(m<0) return `<span class="pill bad">Ya cerró (${s.closes}) · verlo por fuera</span>`;
-  if(m<40) return `<span class="pill warn">⚠️ ${s.lastEntry?"Último acceso":"Cierra"} ${lim} · quedan ${m} min</span>`;
-  return `<span class="pill ok">Abierto hasta ${s.closes}${s.lastEntry?" (acceso hasta "+s.lastEntry+")":""}</span>`;
+  if(!s.closes) return `<span class="pill">Exterior · libre</span>`;
+  if(s.closes==="closed") return `<span class="pill bad">Hoy cerrado · por fuera</span>`;
+  const lim=s.lastEntry||s.closes, m=minsUntil(lim);
+  if(m<0) return `<span class="pill bad">Ya cerró · por fuera</span>`;
+  if(m<40) return `<span class="pill warn">⚠️ ${s.lastEntry?"Acceso":"Cierra"} ${lim} · ${m} min</span>`;
+  return `<span class="pill ok">Abierto hasta ${s.closes}</span>`;
 }
-function mapsUrl(s){return `https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=walking`;}
-function toast(t){const el=$("#toast");el.textContent=t;el.classList.remove("hidden");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.add("hidden"),3200);}
+const mapsUrl=s=>`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=walking`;
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),3000);}
 function save(){store.set("toledo_state",{idx,mode,visited,day:new Date().toDateString()});}
+function setBg(el,url){ el.style.backgroundImage=`url("${url}")`; el.style.animation="none"; void el.offsetWidth; el.style.animation=""; }
 
 function render(){
-  const s = STOPS[idx];
-  $("#walk").classList.toggle("hidden", mode!=="walk");
-  $("#stop").classList.toggle("hidden", mode!=="stop");
+  const s=STOPS[idx];
+  $("#walk").classList.toggle("hidden", view!=="guide"||mode!=="walk");
+  $("#stop").classList.toggle("hidden", view!=="guide"||mode!=="stop");
+  $("#list").classList.toggle("hidden", view!=="list");
+  $("#prog").innerHTML = STOPS.map((x,i)=>`<i class="${visited[x.id]?"d":""} ${i===idx?"c":""}"></i>`).join("");
   if(mode==="walk"){
-    $("#wKick").textContent = `Parada ${idx+1} de ${STOPS.length} · próxima`;
-    $("#wName").textContent = s.name;
-    $("#wBadges").innerHTML = hoursBadge(s) + `<span class="pill">~${s.visit} min aquí</span>`;
-    $("#wDir").innerHTML = s.legDir ? "🧭 "+s.legDir : "🧭 Diríjanse al punto de partida. Usen la flecha o abran Maps.";
-    $("#bMaps").href = mapsUrl(s);
-    $("#bLeg").classList.toggle("hidden", !s.legNarr);
+    setBg($("#wBg"),IMG[s.id]);
+    $("#wKick").textContent=`Próxima · ${idx+1} de ${STOPS.length}`;
+    $("#wName").textContent=s.name;
+    $("#wBadges").innerHTML=hoursBadge(s)+`<span class="pill">~${s.visit} min</span>`;
+    $("#wDir").innerHTML = s.legDir ? s.legDir : "Diríjanse al punto de partida: sigan la flecha o abran Maps.";
+    $("#bMaps").href=mapsUrl(s);
+    $("#bLeg").style.visibility = s.legNarr?"visible":"hidden";
   } else {
-    $("#sKick").textContent = `Parada ${idx+1} de ${STOPS.length}`;
-    $("#sName").textContent = s.name;
-    $("#sBadges").innerHTML = hoursBadge(s);
-    $("#sNarr").textContent = s.narr; $("#sNarr").classList.add("clamp"); $("#bMore").textContent="Leer todo ▾";
-    $("#sRetoTxt").textContent = s.reto; $("#sAns").textContent = s.ans; $("#sAns").classList.add("hidden"); $("#bAns").classList.remove("hidden");
-    $("#sTipTxt").textContent = s.tip;
-    $("#bNext").textContent = idx < STOPS.length-1 ? `Siguiente: ${STOPS[idx+1].name} →` : "🏁 Fin del recorrido";
+    setBg($("#sBg"),IMG[s.id]);
+    $("#sKick").textContent=`Parada ${idx+1} de ${STOPS.length} · ${SHORT[s.id]||""}`;
+    $("#sName").textContent=s.name;
+    $("#sBadges").innerHTML=hoursBadge(s);
+    $("#sNarr").textContent=s.narr; $("#sNarr").classList.add("clamp"); $("#bMore").textContent="Leer todo ▾";
+    $("#plSub").textContent=`Narración · ~${Math.max(1,Math.round(s.narr.split(/\s+/).length/150))} min`;
+    $("#sRetoTxt").textContent=s.reto; $("#sAns").textContent=s.ans; $("#sAns").classList.add("hidden"); $("#bAns").classList.remove("hidden");
+    $("#sTipTxt").textContent=s.tip;
+    $("#bNext").textContent = idx<STOPS.length-1 ? `Siguiente: ${STOPS[idx+1].name} →` : "🏁 Terminar el recorrido";
   }
   renderList(); updatePlayer(); tick(); save();
 }
 function renderList(){
-  $("#list").innerHTML = STOPS.map((s,i)=>`<div class="it ${visited[s.id]?"done":""} ${i===idx?"cur":""}" data-i="${i}">
-    <div class="num">${visited[s.id]?"✓":i+1}</div>
-    <div class="nm">${s.name}<div>${s.closes==="closed"?"Hoy cerrado (exterior)":s.closes?"Cierra "+s.closes:"Exterior"} · ~${s.visit} min</div></div>
-    <span class="small">›</span></div>`).join("");
-  document.querySelectorAll("#list .it").forEach(el=>el.onclick=()=>{ idx=+el.dataset.i; mode="walk"; announced={}; lastSpokenDist=null; showTab("guide"); render(); });
+  $("#list").innerHTML = STOPS.map((s,i)=>`<button class="it ${visited[s.id]?"done":""} ${i===idx?"cur":""}" data-i="${i}" style="width:100%;text-align:left">
+    <div class="th" style="background-image:url('${IMG[s.id]}')"><span class="n">${visited[s.id]?"✓":i+1}</span></div>
+    <div class="nm"><b>${s.name}</b><span>${s.closes==="closed"?"Hoy cerrado · exterior":s.closes?"Cierra "+s.closes:"Exterior"} · ~${s.visit} min</span></div><span style="color:var(--mute)">›</span></button>`).join("");
+  document.querySelectorAll("#list .it").forEach(el=>el.onclick=()=>{ idx=+el.dataset.i; mode="walk"; announced={}; lastSpokenDist=null; view="guide"; render(); window.scrollTo({top:0}); });
 }
-function drawArrow(){
-  const s=STOPS[idx]; if(!pos||!s) return;
-  const b=bearing(pos,s);
-  const rot = heading==null ? b : (b-heading);
-  $("#arrow").style.transform = `rotate(${rot}deg)`;
-  $("#northMark").style.transform = heading==null ? "translateX(-50%)" : `translateX(-50%)`;
-  $("#northMark").textContent = heading==null ? "N ↑" : "🧭";
-}
+function drawArrow(){ const s=STOPS[idx]; if(!pos||!s) return; const b=bearing(pos,s); $("#arrow").style.transform=`rotate(${heading==null?b:b-heading}deg)`; $("#northMark").textContent = heading==null?"N":"•"; }
 function tick(){
-  $("#clock").textContent = hhmm(new Date());
+  $("#clock").textContent=hhmm(new Date());
   const s=STOPS[idx]; if(!s||!pos) return;
-  const d=dist(pos,s), b=bearing(pos,s);
-  drawArrow();
-  if(mode==="walk"){
-    $("#wDist").innerHTML = (d<1000?Math.round(d)+" m":(d/1000).toFixed(1)+" km") + `<small>${relDir(b)} · ~${Math.max(1,Math.round(d/70))} min a pie</small>`;
-    // avisos por voz
-    if(d < s.r + Math.min(25,(pos.acc||0)/2)){ arrive(true); return; }
-    if(d < 90 && !announced.near){ announced.near=true; if(autoVoice && !speaking) say(`Ya casi llegan a ${s.name}. Faltan unos ${Math.round(d/10)*10} metros, ${relDir(b)}.`,"Aviso"); }
-    for(const th of [400,250,150]){
-      if(d<th && d>90 && !announced["d"+th] && lastSpokenDist && lastSpokenDist>=th){ announced["d"+th]=true; if(autoVoice && !speaking) say(`Vamos bien. Quedan unos ${th} metros hasta ${s.name}, ${relDir(b)}.`,"Aviso"); }
-    }
-    lastSpokenDist = d;
-  }
+  const d=dist(pos,s), b=bearing(pos,s); drawArrow();
+  if(mode!=="walk") return;
+  $("#wDist").innerHTML = d<1000 ? `${Math.round(d)}<small>m</small>` : `${(d/1000).toFixed(1)}<small>km</small>`;
+  $("#wDistSub").textContent = `${relDir(b)} · ~${Math.max(1,Math.round(d/70))} min a pie`;
+  if(d < s.r + Math.min(25,(pos.acc||0)/2)){ arrive(true); return; }
+  if(d<90 && !announced.near){ announced.near=true; if(autoVoice&&!speaking) say(`Ya casi llegan a ${s.name}. Faltan unos ${Math.round(d/10)*10} metros, ${relDir(b)}.`,"Aviso"); }
+  for(const th of [400,250,150]){ if(d<th&&d>90&&!announced["d"+th]&&lastSpokenDist&&lastSpokenDist>=th){ announced["d"+th]=true; if(autoVoice&&!speaking) say(`Vamos bien. Quedan unos ${th} metros hasta ${s.name}, ${relDir(b)}.`,"Aviso"); } }
+  lastSpokenDist=d;
 }
-setInterval(()=>{ $("#clock").textContent=hhmm(new Date()); if(mode==="walk") $("#wBadges").innerHTML = hoursBadge(STOPS[idx]) + `<span class="pill">~${STOPS[idx].visit} min aquí</span>`; },30000);
+setInterval(()=>{ $("#clock").textContent=hhmm(new Date()); if(mode==="walk"&&!$("#app").classList.contains("hidden")) $("#wBadges").innerHTML=hoursBadge(STOPS[idx])+`<span class="pill">~${STOPS[idx].visit} min</span>`; },30000);
 
 function arrive(auto){
   if(mode==="stop") return;
-  mode="stop"; visited[STOPS[idx].id]=true; render();
+  mode="stop"; view="guide"; visited[STOPS[idx].id]=true; render();
   if(auto) toast("📍 ¡Llegaron a "+STOPS[idx].name+"!");
-  if(navigator.vibrate) try{navigator.vibrate([120,60,120])}catch(e){}
-  if(autoVoice || !auto) say(STOPS[idx].narr, STOPS[idx].name);
+  try{ navigator.vibrate&&navigator.vibrate([120,60,120]); }catch(e){}
+  if(autoVoice||!auto) say(STOPS[idx].narr, STOPS[idx].name);
   window.scrollTo({top:0,behavior:"smooth"});
 }
+function legSay(){ const s=STOPS[idx]; say(`Próxima parada: ${s.name}. ${s.legDir.replace(/<[^>]+>/g,"")} ${s.legNarr}`, "Camino a "+s.name); }
 function goNext(){
   if(idx>=STOPS.length-1){ say("Fin del recorrido. Gracias por caminar Toledo. Que disfruten el atardecer.","Fin"); toast("🏁 ¡Recorrido completo!"); return; }
   idx++; mode="walk"; announced={}; lastSpokenDist=null; render();
-  const s=STOPS[idx];
-  const dirTxt = s.legDir.replace(/<[^>]+>/g,"");
-  if(autoVoice) say(`Próxima parada: ${s.name}. ${dirTxt} ${s.legNarr}`, "Camino a "+s.name);
+  if(autoVoice) legSay(); else stopVoice();
   window.scrollTo({top:0,behavior:"smooth"});
 }
+$("#bArrive").onclick=()=>arrive(false);
+$("#bSkip").onclick=()=>{ stopVoice(); goNext(); };
+$("#bNext").onclick=goNext;
+$("#bLeg").onclick=legSay;
+$("#bPlay").onclick=()=>{ if(speaking) togglePause(); else say(STOPS[idx].narr,STOPS[idx].name); };
+$("#bMore").onclick=()=>{ const n=$("#sNarr"); n.classList.toggle("clamp"); $("#bMore").textContent=n.classList.contains("clamp")?"Leer todo ▾":"Mostrar menos ▴"; };
+$("#bAns").onclick=()=>{ $("#sAns").classList.remove("hidden"); $("#bAns").classList.add("hidden"); };
+$("#bList").onclick=()=>{ view = view==="list"?"guide":"list"; render(); window.scrollTo({top:0}); };
+$("#home").onclick=()=>{ view="guide"; render(); };
 
-/* botones */
-$("#bArrive").onclick = ()=>arrive(false);
-$("#bSkip").onclick = ()=>{ stopVoice(); goNext(); };
-$("#bNext").onclick = goNext;
-$("#bLeg").onclick = ()=>{ const s=STOPS[idx]; say(s.legDir.replace(/<[^>]+>/g,"")+" "+s.legNarr, "Camino a "+s.name); };
-$("#bPlay").onclick = ()=>{ if(speaking&&paused){ $("#pPause").click(); return;} if(speaking){ $("#pPause").click(); return;} say(STOPS[idx].narr, STOPS[idx].name); };
-$("#bReplay").onclick = ()=>say(STOPS[idx].narr, STOPS[idx].name);
-$("#bMore").onclick = ()=>{ const n=$("#sNarr"); n.classList.toggle("clamp"); $("#bMore").textContent = n.classList.contains("clamp")?"Leer todo ▾":"Mostrar menos ▴"; };
-$("#bAns").onclick = ()=>{ $("#sAns").classList.remove("hidden"); $("#bAns").classList.add("hidden"); };
-function showTab(t){ $("#tabGuide").classList.toggle("on",t==="guide"); $("#tabList").classList.toggle("on",t==="list"); $("#list").classList.toggle("hidden",t!=="list"); if(t==="list"){ $("#walk").classList.add("hidden"); $("#stop").classList.add("hidden"); } else render(); }
-$("#tabGuide").onclick=()=>showTab("guide");
-$("#tabList").onclick=()=>showTab("list");
+/* ajustes */
+function openSheet(on){ $("#sheet").classList.toggle("on",on); $("#sheetBg").classList.toggle("on",on); if(on){ loadVoices(); syncSet(); } }
+function syncSet(){ document.querySelectorAll("#rateSeg button").forEach(b=>b.classList.toggle("on",+b.dataset.r===rate)); $("#autoSw").classList.toggle("on",autoVoice); }
+$("#bSet").onclick=()=>openSheet(true);
+$("#sheetBg").onclick=()=>openSheet(false);
+document.querySelectorAll("#rateSeg button").forEach(b=>b.onclick=()=>{ rate=+b.dataset.r; prefs.rate=rate; store.set("toledo_prefs",prefs); syncSet(); });
+$("#autoSw").onclick=()=>{ autoVoice=!autoVoice; prefs.auto=autoVoice; store.set("toledo_prefs",prefs); syncSet(); };
+$("#bTest").onclick=()=>say("Bienvenidos a Toledo, la ciudad de las tres culturas. Así va a sonar su guía durante el paseo.","Prueba de voz");
 
 /* inicio */
 $("#startAt").innerHTML = STOPS.map((s,i)=>`<option value="${i}">${i+1}. ${s.name}</option>`).join("");
-const prev = store.get("toledo_state");
-if(prev && prev.day===new Date().toDateString() && prev.idx>0){
-  $("#startAt").value = prev.idx; visited = prev.visited||{};
-  $("#resumeNote").textContent = `Retoman donde iban: ${STOPS[prev.idx].name}.`;
-}
-$("#go").onclick = async ()=>{
-  idx = +$("#startAt").value; mode="walk";
-  $("#start").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#player").classList.remove("hidden");
-  // desbloquear voz en el gesto del usuario
-  const s=STOPS[idx];
-  const leg = idx>0 && s.legNarr ? ` ${s.legDir.replace(/<[^>]+>/g,"")} ${s.legNarr}` : "";
-  say(`${INTRO} Primera parada: ${s.name}.${leg}`, "Bienvenida");
-  startCompass(); keepAwake(); startGeo();
-  render();
+const prev=store.get("toledo_state");
+if(prev&&prev.day===new Date().toDateString()&&prev.idx>0){ $("#startAt").value=prev.idx; visited=prev.visited||{}; $("#resumeNote").textContent=`↺ Retoman en: ${STOPS[prev.idx].name}`; }
+$("#go").onclick=()=>{
+  idx=+$("#startAt").value; mode="walk"; view="guide";
+  $("#landing").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#player").classList.remove("hidden");
+  window.scrollTo({top:0});
+  const s=STOPS[idx]; const leg = idx>0&&s.legNarr ? ` ${s.legDir.replace(/<[^>]+>/g,"")} ${s.legNarr}` : "";
+  say(`${INTRO} Primera parada: ${s.name}.${leg}`,"Bienvenida");
+  startCompass(); keepAwake(); startGeo(); render();
 };
 </script>
 </body>
