@@ -26,8 +26,37 @@ function renderVoices(){
     return `<button class="vopt ${voice&&v.name===voice.name?"on":""}" data-i="${i}"><span class="fl">${fl}</span><span><b>${v.name.replace(/\(.*\)/,"").trim()}</b><span>${rg}${/premium|enhanced|mejorada|neural/i.test(v.name)?" · alta calidad":""}</span></span></button>`;}).join("");
   box.querySelectorAll(".vopt").forEach(b=>b.onclick=()=>{voice=voices[+b.dataset.i];prefs.voice=voice.name;store.set("toledo_prefs",prefs);renderVoices();say("Hola, soy su guía por Toledo. ¿Les gusta cómo sueno?","Prueba de voz");});
 }
-function chunk(text){ const clean=text.replace(/<[^>]+>/g,""); const parts=clean.replace(/([\.\?\!:])\s+/g,"$1|").split(/\||\n+/).map(s=>s.trim()).filter(Boolean); const out=[];let buf=""; for(const p of parts){ if((buf+" "+p).length>200&&buf){out.push(buf);buf=p}else{buf=buf?buf+" "+p:p} } if(buf) out.push(buf); return out; }
-function hardCancel(){ gen++; if(synth) synth.cancel(); }
+/* ---- voz premium (OpenAI / ElevenLabs) ---- */
+const AUD=new Audio(); AUD.setAttribute("playsinline",""); AUD.preload="auto";
+function silentWav(){ const n=800,b=new ArrayBuffer(44+n),v=new DataView(b); const w=(o,s)=>[...s].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0))); w(0,"RIFF");v.setUint32(4,36+n,true);w(8,"WAVE");w(12,"fmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,8000,true);v.setUint16(32,1,true);v.setUint16(34,8,true);w(36,"data");v.setUint32(40,n,true);for(let i=0;i<n;i++)v.setUint8(44+i,128);return URL.createObjectURL(new Blob([b],{type:"audio/wav"})); }
+function unlockAudio(){ try{ AUD.src=silentWav(); AUD.play().catch(()=>{}); }catch(e){} }
+const premiumOn=()=> (prefs.prov==="openai"||prefs.prov==="eleven") && !!prefs.key && !premiumBroken;
+let premiumBroken=false;
+const audioCache=new Map();
+const OAI_INSTR="Sos un guía turístico cálido y apasionado que cuenta la historia de Toledo a dos amigos mientras caminan. Hablá en español latinoamericano neutro, con naturalidad, pausas expresivas y entusiasmo contenido, como un buen narrador de podcast. Nada de tono robótico.";
+function ttsFetch(text){
+  const k=(prefs.prov||"")+"|"+(prefs.prov==="openai"?(prefs.ovoice||"coral"):(prefs.evoice||""))+"|"+text;
+  if(audioCache.has(k)) return audioCache.get(k);
+  const p=(async()=>{
+    let r;
+    if(prefs.prov==="openai"){
+      r=await fetch("https://api.openai.com/v1/audio/speech",{method:"POST",headers:{"Authorization":"Bearer "+prefs.key,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-4o-mini-tts",voice:prefs.ovoice||"coral",input:text,instructions:OAI_INSTR,response_format:"mp3"})});
+    } else {
+      const vid=(prefs.evoice||"EXAVITQu4vr4xnSDxMaL").trim();
+      r=await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${encodeURIComponent(vid)}?output_format=mp3_44100_64`,{method:"POST",headers:{"xi-api-key":prefs.key,"Content-Type":"application/json","Accept":"audio/mpeg"},body:JSON.stringify({text,model_id:"eleven_multilingual_v2",voice_settings:{stability:0.45,similarity_boost:0.8,style:0.3,use_speaker_boost:true}})});
+    }
+    if(!r.ok){ const e=new Error("HTTP "+r.status); e.status=r.status; try{ e.body=(await r.text()).slice(0,160);}catch(_){} throw e; }
+    return URL.createObjectURL(await r.blob());
+  })();
+  audioCache.set(k,p); p.catch(()=>audioCache.delete(k));
+  return p;
+}
+function premiumFail(e){
+  if(e&&(e.status===401||e.status===403||e.status===402||e.status===429)){ premiumBroken=true; toast(`Voz premium: ${e.status===401?"clave inválida":e.status===429?"sin crédito o límite alcanzado":"acceso rechazado"}. Uso la voz del teléfono.`); }
+  else toast("La voz premium no respondió; sigo con la del teléfono.");
+}
+function chunk(text){ const clean=text.replace(/<[^>]+>/g,""); const parts=clean.replace(/([\.\?\!:])\s+/g,"$1|").split(/\||\n+/).map(s=>s.trim()).filter(Boolean); const out=[];let buf=""; for(const p of parts){ if((buf+" "+p).length>(premiumOn()?650:200)&&buf){out.push(buf);buf=p}else{buf=buf?buf+" "+p:p} } if(buf) out.push(buf); return out; }
+function hardCancel(){ gen++; if(synth) synth.cancel(); try{ AUD.pause(); }catch(e){} }
 /* say: reemplaza lo que suena */
 function say(text,label){ if(!synth){ toast("Este navegador no tiene voz."); return; } hardCancel(); resumeAfter=null; queue=chunk(text); nowLabel=label||""; paused=false; next(); }
 /* sayIfFree: solo si no está hablando (historias automáticas) */
@@ -42,7 +71,19 @@ function next(){
   if(!queue.length && resumeAfter){ queue=resumeAfter.q; nowLabel=resumeAfter.label; resumeAfter=null; }
   if(!queue.length){ speaking=false; cur=""; lastSpeechEnd=Date.now(); updatePlayer(); setTimeout(onSpeechEnd,1400); return; }
   speaking=true; cur=queue.shift();
-  const my=gen, u=new SpeechSynthesisUtterance(cur);
+  const my=gen;
+  if(premiumOn()){
+    const txt=cur;
+    ttsFetch(txt).then(url=>{ if(my!==gen) return; AUD.src=url; AUD.playbackRate=rate; AUD.onended=()=>{ if(my===gen&&!paused) next(); }; AUD.onerror=()=>{ if(my===gen) deviceSpeak(txt,my); }; AUD.play().catch(()=>{ if(my===gen) deviceSpeak(txt,my); }); })
+      .catch(e=>{ if(my!==gen) return; premiumFail(e); deviceSpeak(txt,my); });
+    if(queue[0]) ttsFetch(queue[0]).catch(()=>{});
+    updatePlayer(); return;
+  }
+  deviceSpeak(cur,my);
+}
+function deviceSpeak(text,my){
+  if(!synth){ speaking=false; updatePlayer(); return; }
+  const u=new SpeechSynthesisUtterance(text);
   if(voice){u.voice=voice;u.lang=voice.lang;} else u.lang="es-MX";
   u.rate=rate; u.pitch=1;
   u.onend=()=>{ if(my===gen && !paused) next(); };
@@ -93,35 +134,59 @@ function updateMotion(p){
   const ms=$("#moveState"); ms.textContent = stationary?"⏸ Detenidos · historias en pausa":"🚶 Caminando"; ms.className="pill "+(stationary?"warn":"blue");
 }
 
-/* ======================= MAPA ======================= */
-const LAYERS={}; let curLayer="det"; const poiMarkers={};
-function poiIcon(p){ return L.divIcon({className:"",html:`<div class="poi ${told["poi_"+p.id]?"d":""}">★</div>`,iconSize:[22,22],iconAnchor:[11,11]}); }
-let map=null, meMarker=null, accCircle=null, routeLine=null, ghostLine=null, stopMarkers=[], follow=true;
-function mkIcon(i){ const s=STOPS[i]; const cls = i===idx?"c":(visited[s.id]?"d":""); return L.divIcon({className:"",html:`<div class="mk ${cls}">${visited[s.id]&&i!==idx?"✓":i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]}); }
+/* ======================= MAPA (MapLibre · navegación tipo GPS) ======================= */
+const STYLE_DET="https://tiles.openfreemap.org/styles/liberty";
+const STYLE_SAT={version:8,glyphs:"https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",sources:{sat:{type:"raster",tiles:["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],tileSize:256,maxzoom:19,attribution:"Esri · Maxar"}},layers:[{id:"sat",type:"raster",source:"sat"}]};
+let map=null, curLayer="det", meMarker=null, meEl=null, stopMarkers=[], poiMarkers={}, follow=true, headUp=true, mapFull=false, lastCam=0;
+function mkEl(i){ const s=STOPS[i]; const d=document.createElement("div"); d.className="mk "+(i===idx?"c":(visited[s.id]?"d":"")); d.textContent = visited[s.id]&&i!==idx?"✓":(i+1); d.onclick=(e)=>{ e.stopPropagation(); if(i!==idx){ idx=i; mode="walk"; startLeg(); render(); toast("Próxima: "+s.name); } }; return d; }
+function poiEl(p){ const d=document.createElement("div"); d.className="poi "+(told["poi_"+p.id]?"d":""); d.textContent="★"; return d; }
 function initMap(){
-  if(map||typeof L==="undefined"){ if(typeof L==="undefined") $("#map").innerHTML='<div style="padding:30px;color:#bfae98;text-align:center">No se pudo cargar el mapa. Usen Google Maps.</div>'; return; }
-  map=L.map("map",{zoomControl:false,attributionControl:true}).setView([STOPS[idx].lat,STOPS[idx].lng],16);
-  LAYERS.det=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'© OpenStreetMap'});
-  LAYERS.sat=L.layerGroup([L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:'Esri · Maxar'}),L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:'© CARTO'})]);
-  LAYERS.det.addTo(map);
-  POIS.forEach(p=>{ const mk=L.marker([p.lat,p.lng],{icon:poiIcon(p)}).addTo(map); mk.bindPopup(`<b>${p.n}</b><br>${p.t.charAt(0).toUpperCase()+p.t.slice(1)}<br><button data-poi="${p.id}">🎧 Escuchar</button>`); poiMarkers[p.id]=mk; });
-  map.on("popupopen",e=>{ const b=e.popup.getElement().querySelector("button[data-poi]"); if(b) b.onclick=()=>{ const p=POIS.find(x=>x.id===b.dataset.poi); say(p.n+". "+p.t.charAt(0).toUpperCase()+p.t.slice(1),p.n); }; });
-  ghostLine=L.polyline(STOPS.map(s=>[s.lat,s.lng]),{color:"#8a6a3a",weight:3,opacity:.5,dashArray:"4 8"}).addTo(map);
-  STOPS.forEach((s,i)=>{ const m=L.marker([s.lat,s.lng],{icon:mkIcon(i)}).addTo(map); m.on("click",()=>{ if(i!==idx){ idx=i; mode="walk"; startLeg(); render(); } }); stopMarkers.push(m); });
+  if(map) return;
+  if(typeof maplibregl==="undefined"){ $("#map").innerHTML='<div style="padding:30px;color:#bfae98;text-align:center">No se pudo cargar el mapa. Usen Google Maps.</div>'; return; }
+  map=new maplibregl.Map({container:"map",style:STYLE_DET,center:[STOPS[idx].lng,STOPS[idx].lat],zoom:16,pitch:0,attributionControl:{compact:true},maxPitch:70});
+  map.on("style.load",addRouteLayers);
   map.on("dragstart",()=>{ follow=false; $("#bFollow").classList.remove("on"); });
+  map.on("rotatestart",e=>{ if(e.originalEvent){ follow=false; $("#bFollow").classList.remove("on"); } });
+  STOPS.forEach((s,i)=>{ const m=new maplibregl.Marker({element:mkEl(i)}).setLngLat([s.lng,s.lat]).addTo(map); stopMarkers.push(m); });
+  POIS.forEach(p=>{ const el=poiEl(p); const pop=new maplibregl.Popup({offset:14,closeButton:false}).setHTML(`<b>${p.n}</b><br>${p.t.charAt(0).toUpperCase()+p.t.slice(1)}<br><button data-poi="${p.id}">🎧 Escuchar</button>`);
+    pop.on("open",()=>{ const b=pop.getElement().querySelector("button[data-poi]"); if(b) b.onclick=()=>say(p.n+". "+p.t.charAt(0).toUpperCase()+p.t.slice(1),p.n); });
+    poiMarkers[p.id]=new maplibregl.Marker({element:el}).setLngLat([p.lng,p.lat]).setPopup(pop).addTo(map); });
 }
-function refreshMarkers(){ stopMarkers.forEach((m,i)=>m.setIcon(mkIcon(i))); }
+function addRouteLayers(){
+  if(!map) return;
+  if(curLayer==="det"){ try{ const lyr=map.getStyle().layers.find(l=>l.type==="fill-extrusion"); if(lyr) map.setPaintProperty(lyr.id,"fill-extrusion-opacity",0.75); }catch(e){} }
+  if(!map.getSource("route")) map.addSource("route",{type:"geojson",data:routeGeo()});
+  if(!map.getLayer("route-case")) map.addLayer({id:"route-case",type:"line",source:"route",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#5a3c12","line-width":11,"line-opacity":.85}});
+  if(!map.getLayer("route-line")) map.addLayer({id:"route-line",type:"line",source:"route",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#f0b13d","line-width":7}});
+}
+function routeGeo(){ const coords = route&&route.line ? route.line.map(p=>[p.lng,p.lat]) : []; return {type:"Feature",geometry:{type:"LineString",coordinates:coords}}; }
+function drawRoute(){ if(map&&map.getSource("route")) map.getSource("route").setData(routeGeo()); }
+function refreshMarkers(){ stopMarkers.forEach((m,i)=>{ const s=STOPS[i]; const el=m.getElement(); el.className="mk "+(i===idx?"c":(visited[s.id]?"d":"")); el.textContent = visited[s.id]&&i!==idx?"✓":(i+1); }); }
+function poiDone(id){ const m=poiMarkers[id]; if(m) m.getElement().classList.add("d"); }
+let camHead=null;
+function smoothCam(h){ if(h==null) return camHead; if(camHead==null) return camHead=h; const d=((h-camHead+540)%360)-180; camHead=(camHead+d*0.35+360)%360; return camHead; }
 function drawMe(){
   if(!map||!pos) return;
-  const ll=[pos.lat,pos.lng];
-  if(!meMarker){ meMarker=L.marker(ll,{icon:L.divIcon({className:"",html:'<div class="me"><div class="cone" id="cone"></div><div class="dot"></div></div>',iconSize:[22,22],iconAnchor:[11,11]}),zIndexOffset:1000}).addTo(map); accCircle=L.circle(ll,{radius:pos.acc,color:"#4aa3ff",weight:1,fillOpacity:.08}).addTo(map); }
-  meMarker.setLatLng(ll); accCircle.setLatLng(ll).setRadius(Math.min(pos.acc,150));
-  const c=document.getElementById("cone"); if(c){ if(heading!=null){ c.style.display="block"; c.style.transform=`rotate(${heading}deg)`; } else c.style.display="none"; }
-  if(follow) map.panTo(ll,{animate:true,duration:.6});
+  if(!meMarker){ meEl=document.createElement("div"); meEl.className="me2"; meEl.innerHTML='<div class="halo"></div><svg viewBox="0 0 40 40"><path d="M20 3 L33 35 L20 27 L7 35 Z" fill="#2f8cff" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>'; meMarker=new maplibregl.Marker({element:meEl,rotationAlignment:"map",pitchAlignment:"map"}).setLngLat([pos.lng,pos.lat]).addTo(map); }
+  meMarker.setLngLat([pos.lng,pos.lat]);
+  const h=smoothCam(heading);
+  meMarker.setRotation(h==null?0:h);
+  camUpdate();
 }
-$("#bLayer").onclick=()=>{ if(!map) return; map.removeLayer(LAYERS[curLayer]); curLayer=curLayer==="det"?"sat":"det"; LAYERS[curLayer].addTo(map); $("#bLayer").textContent=curLayer==="det"?"🛰️":"🗺️"; toast(curLayer==="det"?"Mapa detallado":"Vista satélite"); };
-$("#bFollow").onclick=()=>{ follow=!follow; $("#bFollow").classList.toggle("on",follow); if(follow&&pos&&map) map.setView([pos.lat,pos.lng],17); };
-$("#bFit").onclick=()=>{ if(!map) return; follow=false; $("#bFollow").classList.remove("on"); const pts=[[STOPS[idx].lat,STOPS[idx].lng]]; if(pos) pts.push([pos.lat,pos.lng]); if(route&&route.line) route.line.forEach(p=>pts.push([p.lat,p.lng])); map.fitBounds(pts,{padding:[60,60],maxZoom:18}); };
+function camUpdate(force){
+  if(!map||!pos||!follow) return;
+  const now=Date.now(); if(!force && now-lastCam<450) return; lastCam=now;
+  const H=map.getContainer().clientHeight;
+  map.easeTo({center:[pos.lng,pos.lat], bearing: headUp&&camHead!=null?camHead:0, pitch: headUp?58:0, zoom: Math.max(map.getZoom(), headUp?17.6:17), padding:{top: headUp?Math.round(H*0.42):0, bottom: headUp?40:0, left:0, right:0}, duration: force?800:450, easing:t=>t});
+}
+function mapSetView(p,z){ if(map) map.jumpTo({center:[p.lng,p.lat],zoom:z||17}); }
+function fitRoute(){ if(!map) return; const pts=[[STOPS[idx].lng,STOPS[idx].lat]]; if(pos) pts.push([pos.lng,pos.lat]); if(route&&route.line) route.line.forEach(p=>pts.push([p.lng,p.lat])); const b=pts.reduce((bb,c)=>bb.extend(c),new maplibregl.LngLatBounds(pts[0],pts[0])); map.fitBounds(b,{padding:70,bearing:0,pitch:0,maxZoom:18,duration:700}); }
+$("#bLayer").onclick=()=>{ if(!map) return; curLayer=curLayer==="det"?"sat":"det"; map.setStyle(curLayer==="det"?STYLE_DET:STYLE_SAT); $("#bLayer").textContent=curLayer==="det"?"🛰️":"🗺️"; toast(curLayer==="det"?"Mapa 3D":"Vista satélite"); };
+$("#bFollow").onclick=()=>{ follow=true; $("#bFollow").classList.add("on"); camUpdate(true); };
+$("#bFit").onclick=()=>{ follow=false; $("#bFollow").classList.remove("on"); fitRoute(); };
+$("#bHead").onclick=()=>{ headUp=!headUp; $("#bHead").textContent=headUp?"🧭":"N"; $("#bHead").classList.toggle("on",headUp); follow=true; $("#bFollow").classList.add("on"); toast(headUp?"El mapa gira según hacia dónde miran":"Norte arriba"); camUpdate(true); };
+function setFull(on){ mapFull=on; document.body.classList.toggle("mapfull",on); $("#bFull").textContent=on?"✕":"⛶"; setTimeout(()=>{ if(map){ map.resize(); camUpdate(true); } },80); }
+$("#bFull").onclick=()=>setFull(!mapFull);
 
 /* ======================= RUTA A PIE (OSRM) ======================= */
 let route=null, routing=false, lastRouteAt=0, offCount=0, leg=null;
@@ -152,8 +217,8 @@ async function computeRoute(reason){
   const r=await fetchRoute(from,to); routing=false;
   if(r){ route=r; route.steps[0].done=true; } else { route={line:[from,{lat:to.lat,lng:to.lng}],steps:[],distance:dist(from,to),straight:true}; }
   if(leg && !leg.total) leg.total=route.distance;
-  if(map){ if(routeLine) map.removeLayer(routeLine); routeLine=L.polyline(route.line.map(p=>[p.lat,p.lng]),{color:"#e3b25a",weight:6,opacity:.95,dashArray:route.straight?"2 10":null,lineCap:"round"}).addTo(map); }
-  if(reason!=="re" && map && !pos){ map.fitBounds(route.line.map(p=>[p.lat,p.lng]),{padding:[60,60]}); }
+  drawRoute();
+  if(reason!=="re" && map && !pos){ fitRoute(); }
   if(reason==="re") feedAdd("🔁","Ruta recalculada desde donde están.");
   updateNav();
 }
@@ -207,7 +272,7 @@ function checkPois(){
   for(const p of POIS){
     if(told["poi_"+p.id]) continue;
     const d=dist(pos,p); if(d>p.r) continue;
-    markTold("poi_"+p.id); if(poiMarkers[p.id]) poiMarkers[p.id].setIcon(poiIcon(p));
+    markTold("poi_"+p.id); poiDone(p.id);
     const rd=d<12?"aquí mismo":relDir(bearing(pos,p));
     sayUrgent(`Miren, ${rd}: ${p.t}`); feedAdd("★",`<b>${p.n}</b>`); updStoryCount(); walkedSinceSpeech=0; return;
   }
@@ -262,23 +327,26 @@ function legSay(manual){
   say(`Próxima parada: ${s.name}. ${s.legDir.replace(/<[^>]+>/g,"")} ${first}`, "Camino a "+s.name);
   leg.next=1; markTold("leg_"+s.id+"_0");
 }
+function guideStory(){
+  const ref = pos || STOPS[idx];
+  let best=null, bs=Infinity;
+  for(const g of GUIDE){ if(told["g_"+g.id]) continue; const sc = g.lat!=null ? dist(ref,g) : 650; if(g.lat!=null && sc>700) continue; if(sc<bs){ bs=sc; best=g; } }
+  if(!best) return false;
+  markTold("g_"+best.id); say(`Les cuento una historia: ${best.t}. ${best.x}`,"📖 "+best.t); feedAdd("📖",`<b>${best.t}</b>`); updStoryCount(); walkedSinceSpeech=0; return true;
+}
 function autoStories(){
-  if(mode!=="walk"||!autoVoice||stationary||speaking||paused) return;
-  if(pendingStreet && !told["st_"+pendingStreet.id]){ const st=pendingStreet; pendingStreet=null; if(sayIfFree(st.t,"📍 "+curStreet)){ markTold("st_"+st.id); feedAdd("🏛️",`<b>${curStreet}</b>: historia de la calle`); updStoryCount(); walkedSinceSpeech=0; return; } }
-  // siguientes partes de la historia del tramo según avance
+  if(!autoVoice||stationary||speaking||paused||waitingStart||view!=="guide") return;
+  const silence=Date.now()-lastSpeechEnd;
+  if(mode==="stop"){ if(chainOn||silence<20000) return; guideStory(); return; }
+  if(silence<4500) return;
+  if(pendingStreet && !told["st_"+pendingStreet.id]){ const st=pendingStreet; pendingStreet=null; markTold("st_"+st.id); say(st.t,"📍 "+(curStreet||"Calle")); feedAdd("🏛️",`<b>${curStreet}</b>: historia de la calle`); updStoryCount(); walkedSinceSpeech=0; return; }
   if(leg && leg.next<leg.parts.length){
-    const need = leg.parts.length>1 ? 0.15 + 0.65*(leg.next/(leg.parts.length)) : 0;
-    if(legProgress()>=need || Date.now()-lastSpeechEnd>40000){
-      const k="leg_"+leg.id+"_"+leg.next;
-      if(!told[k]){ say(leg.parts[leg.next],"Camino a "+STOPS[idx].name); markTold(k); updStoryCount(); }
-      leg.next++; walkedSinceSpeech=0; return;
-    }
+    const k="leg_"+leg.id+"_"+leg.next; const part=leg.parts[leg.next]; leg.next++;
+    if(!told[k]){ markTold(k); say(part,"Camino a "+STOPS[idx].name); updStoryCount(); walkedSinceSpeech=0; return; }
   }
-  // dato al paso si llevan un rato caminando en silencio
-  if(walkedSinceSpeech>220 && Date.now()-lastSpeechEnd>60000){
-    const f=FILL.find(x=>!told["f_"+x.id]);
-    if(f){ say(f.t,"Dato al paso"); markTold("f_"+f.id); feedAdd("💬","Dato al paso"); updStoryCount(); walkedSinceSpeech=0; }
-  }
+  if(guideStory()) return;
+  const f=FILL.find(x=>!told["f_"+x.id]);
+  if(f){ markTold("f_"+f.id); say(f.t,"Dato al paso"); feedAdd("💬","Dato al paso"); updStoryCount(); walkedSinceSpeech=0; }
 }
 function updStoryCount(){ $("#storyState").textContent="Historias: "+Object.keys(told).filter(k=>k!=="day").length; }
 
@@ -323,14 +391,14 @@ function startGeo(onFirst){
       const first=!pos; pos=np;
       if(!compassOn && p.coords.heading!=null && !isNaN(p.coords.heading) && p.coords.speed>0.6) heading=p.coords.heading;
       setGps(); updateMotion(pos); drawMe();
-      if(first){ if(onFirst) onFirst(pos); if(map) map.setView([pos.lat,pos.lng],17); if(mode==="walk"&&!waitingStart) computeRoute("new"); }
+      if(first){ if(onFirst) onFirst(pos); mapSetView(pos,17); if(mode==="walk"&&!waitingStart) computeRoute("new"); }
       if(!waitingStart) tick();
     }, e=>geoFail(e.code===1?"Ubicación denegada":"Sin señal GPS"), {enableHighAccuracy:true,maximumAge:3000,timeout:20000});
   }catch(e){ geoFail("GPS bloqueado aquí"); }
 }
 function geoFail(msg){ const g=$("#gps"); g.textContent="Manual"; g.className="pill warn"; $("#manualNote").innerHTML=`📍 ${msg}. Usen <b>Google Maps</b> y toquen <b>Llegamos</b> al llegar.`; $("#streetName").textContent="Sin GPS"; }
 function setGps(){ if($("#streetName").textContent==="Sin GPS") $("#streetName").textContent=curStreet||"Buscando calle…"; const g=$("#gps"); g.textContent="GPS ±"+Math.round(pos.acc)+"m"; g.className="pill "+(pos.acc<40?"ok":"warn"); $("#manualNote").textContent=pos.acc>60?"El GPS pierde precisión entre estas calles. Si ya están ahí, toquen Llegamos.":""; }
-function onOrient(e){ let h=null; if(typeof e.webkitCompassHeading==="number") h=e.webkitCompassHeading; else if(e.absolute&&e.alpha!=null) h=(360-e.alpha)%360; if(h!=null){ heading=h; compassOn=true; const c=document.getElementById("cone"); if(c){ c.style.display="block"; c.style.transform=`rotate(${h}deg)`; } } }
+function onOrient(e){ let h=null; if(typeof e.webkitCompassHeading==="number") h=e.webkitCompassHeading; else if(e.absolute&&e.alpha!=null) h=(360-e.alpha)%360; if(h!=null){ heading=h; compassOn=true; if(map&&pos) drawMe(); const c=document.getElementById("cone"); if(c){ c.style.display="block"; c.style.transform=`rotate(${h}deg)`; } } }
 async function startCompass(){ try{ if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==="function"){ const r=await DeviceOrientationEvent.requestPermission(); if(r!=="granted") return; } window.addEventListener("deviceorientationabsolute",onOrient,true); window.addEventListener("deviceorientation",onOrient,true); }catch(e){} }
 async function keepAwake(){ try{ if("wakeLock" in navigator) await navigator.wakeLock.request("screen"); }catch(e){} }
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") keepAwake(); });
@@ -357,7 +425,7 @@ function render(){
     $("#wBadges").innerHTML=hoursBadge(s)+`<span class="pill">~${s.visit} min de visita</span>`;
     $("#wDir").innerHTML=s.legDir?s.legDir:"Diríjanse al punto de partida siguiendo la línea dorada del mapa.";
     $("#bMaps").href=mapsUrl(s);
-    if(map){ setTimeout(()=>map.invalidateSize(),60); }
+    if(map){ setTimeout(()=>map.resize(),60); }
   } else {
     setBg($("#sBg"),IMG[s.id]);
     $("#sKick").textContent=`Parada ${idx+1} de ${STOPS.length} · ${SHORT[s.id]||""}`;
@@ -390,7 +458,7 @@ function tick(){
   if(d<90 && !announcedNear && !told["near_"+s.id] && autoVoice && !stationary){ announcedNear=true; markTold("near_"+s.id); sayUrgent(`Ya casi llegan a ${s.name}. Unos ${Math.round(d/10)*10} metros.`); }
   checkSteps(); checkPois(); maybeReroute(); lookupStreet(); autoStories(); reassure();
 }
-setInterval(()=>{ $("#clock").textContent=hhmm(new Date()); if(!$("#app").classList.contains("hidden")){ if(pos&&mode==="walk"){ updateMotion(pos); autoStories(); } } },5000);
+setInterval(()=>{ $("#clock").textContent=hhmm(new Date()); if(!$("#app").classList.contains("hidden")){ if(pos) updateMotion(pos); autoStories(); } },2500);
 
 function arrive(auto){
   if(mode==="stop") return;
@@ -419,7 +487,7 @@ $("#bList").onclick=()=>{ view=view==="list"?"guide":"list"; render(); window.sc
 $("#home").onclick=()=>{ view="guide"; render(); };
 
 /* ajustes */
-function openSheet(on){ $("#sheet").classList.toggle("on",on); $("#sheetBg").classList.toggle("on",on); if(on){ loadVoices(); syncSet(); } }
+var openSheet=function(on){ $("#sheet").classList.toggle("on",on); $("#sheetBg").classList.toggle("on",on); if(on){ loadVoices(); syncSet(); } }
 function syncSet(){ document.querySelectorAll("#rateSeg button").forEach(b=>b.classList.toggle("on",+b.dataset.r===rate)); $("#autoSw").classList.toggle("on",autoVoice); }
 $("#bSet").onclick=()=>openSheet(true);
 $("#sheetBg").onclick=()=>openSheet(false);
@@ -443,6 +511,7 @@ function beginLeg(intro){
   say(txt,"Camino a "+s.name); leg.next=Math.min(1,leg.parts.length); markTold("leg_"+s.id+"_0");
 }
 $("#go").onclick=()=>{
+  unlockAudio();
   const v=$("#startAt").value; view="guide";
   $("#landing").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#player").classList.remove("hidden");
   window.scrollTo({top:0});
@@ -452,7 +521,7 @@ $("#go").onclick=()=>{
     idx=firstUnvisited(); waitingStart=true; mode="walk"; render();
     say("Un segundo, estoy buscando dónde están para elegir la parada más cercana.","Ubicándolos");
     const fallback=setTimeout(()=>{ if(waitingStart){ waitingStart=false; toast("Sin ubicación: empezamos por "+STOPS[idx].name); beginLeg(intro); } },9000);
-    startGeo((p)=>{ if(!waitingStart) return; waitingStart=false; clearTimeout(fallback); idx=nearestUnvisited(p); toast("📍 Empezamos por "+STOPS[idx].name+", la más cercana"); beginLeg(intro); if(map) map.setView([p.lat,p.lng],17); });
+    startGeo((p)=>{ if(!waitingStart) return; waitingStart=false; clearTimeout(fallback); idx=nearestUnvisited(p); toast("📍 Empezamos por "+STOPS[idx].name+", la más cercana"); beginLeg(intro); mapSetView(p,17); });
   } else {
     idx=+v; startGeo(); beginLeg(intro);
   }
@@ -511,3 +580,10 @@ function arLoop(){
   arRAF=requestAnimationFrame(arLoop);
 }
 $("#bAR").onclick=openAR; $("#bAR2").onclick=openAR; $("#arClose").onclick=closeAR;
+
+/* ---- ajustes voz premium ---- */
+function syncPrem(){ const p=prefs.prov||"device"; document.querySelectorAll("#provSeg button").forEach(b=>b.classList.toggle("on",b.dataset.p===p)); $("#premBox").classList.toggle("hidden",p==="device"); $("#oVoice").classList.toggle("hidden",p!=="openai"); $("#eVoice").classList.toggle("hidden",p!=="eleven"); $("#apiKey").value=prefs.key||""; $("#oVoice").value=prefs.ovoice||"coral"; $("#eVoice").value=prefs.evoice||""; $("#premNote").textContent = p==="device"?"":(premiumOn()?"✓ Voz premium activa.":"Peguen la clave y toquen Guardar."); }
+document.querySelectorAll("#provSeg button").forEach(b=>b.onclick=()=>{ prefs.prov=b.dataset.p; if(prefs.prov==="device"){} store.set("toledo_prefs",prefs); premiumBroken=false; syncPrem(); });
+$("#bPremSave").onclick=()=>{ prefs.key=$("#apiKey").value.trim(); prefs.ovoice=$("#oVoice").value; prefs.evoice=$("#eVoice").value.trim(); store.set("toledo_prefs",prefs); premiumBroken=false; audioCache.clear(); syncPrem(); unlockAudio(); say("Hola, soy su guía en Toledo. Así va a sonar la voz durante el resto del paseo. ¿Seguimos?","Prueba de voz premium"); };
+const _openSheet=openSheet; openSheet=function(on){ _openSheet(on); if(on) syncPrem(); };
+$("#bSet").onclick=()=>openSheet(true); $("#sheetBg").onclick=()=>openSheet(false);

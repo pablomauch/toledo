@@ -3,6 +3,19 @@
 <div class="sheet" id="sheet">
   <div class="grab"></div>
   <h2>La voz de la guía</h2>
+  <div class="box" style="margin-top:10px;border-color:rgba(227,178,90,.45)">
+    <b>✨ Voz premium (natural, tipo locutor)</b>
+    <div style="color:var(--mute);font-size:13.5px;margin-top:4px">Usa una voz neural en la nube con su propia clave. La clave queda guardada solo en este teléfono.</div>
+    <div class="seg" id="provSeg"><button data-p="device">Teléfono</button><button data-p="openai">OpenAI</button><button data-p="eleven">ElevenLabs</button></div>
+    <div id="premBox" class="hidden">
+      <input class="inp" id="apiKey" type="password" autocomplete="off" placeholder="Pegar API key">
+      <select class="inp" id="oVoice"><option value="coral">Coral · femenina cálida</option><option value="nova">Nova · femenina clara</option><option value="sage">Sage · femenina serena</option><option value="shimmer">Shimmer · femenina suave</option><option value="ash">Ash · masculina</option><option value="ballad">Ballad · masculina expresiva</option><option value="verse">Verse · masculina narrador</option><option value="onyx">Onyx · masculina grave</option></select>
+      <input class="inp hidden" id="eVoice" placeholder="Voice ID de ElevenLabs (opcional)">
+      <div class="btns"><button class="btn gold full" id="bPremSave">Guardar y probar</button></div>
+      <div class="note" id="premNote"></div>
+    </div>
+  </div>
+  <div class="row-t" style="margin-top:16px">Voces del teléfono</div>
   <p style="color:var(--mute);font-size:14px;margin:0">Las voces vienen de su teléfono. Las latinoamericanas aparecen primero.</p>
   <div class="vlist" id="vlist"></div>
   <div class="row-t">Velocidad</div>
