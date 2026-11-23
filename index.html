@@ -260,10 +260,13 @@ a{color:inherit}
 .li-mark.on{background:var(--ok);color:#122}
 
 .maplibregl-ctrl-attrib{font-size:9px!important}
-.me2{width:40px;height:40px;position:relative}
-.me2 svg{position:absolute;inset:0;width:40px;height:40px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
-.me2 .halo{position:absolute;inset:-14px;border-radius:50%;background:rgba(47,140,255,.18);animation:halo 2s ease-out infinite}
-@keyframes halo{0%{transform:scale(.5);opacity:1}100%{transform:scale(1.2);opacity:0}}
+.me2{width:120px;height:120px;pointer-events:none}
+.me2 .beam{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from -32deg at 50% 50%,rgba(66,133,244,.55) 0deg,rgba(66,133,244,.0) 64deg,transparent 64deg);-webkit-mask:radial-gradient(circle at 50% 50%,#000 0,#000 30%,transparent 62%);mask:radial-gradient(circle at 50% 50%,#000 0,#000 30%,transparent 62%)}
+.me2.nobeam .beam{display:none}
+.me2 .dot{position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px;border-radius:50%;background:#4285f4;border:4px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.45)}
+.me2 .halo{position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px;border-radius:50%;background:rgba(66,133,244,.35);animation:halo 2.2s ease-out infinite}
+@keyframes halo{0%{transform:scale(1);opacity:.9}100%{transform:scale(3.2);opacity:0}}
+.compass-ask{position:absolute;left:50%;top:70px;transform:translateX(-50%);z-index:600;background:#4285f4;color:#fff;font-weight:800;padding:11px 16px;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,.35);white-space:nowrap}
 .mk{cursor:pointer}
 body.mapfull .mapwrap{position:fixed;inset:0;z-index:2500;border-radius:0;margin:0;border:0}
 body.mapfull #map{height:100svh}
@@ -355,6 +358,7 @@ body.mapfull .topbar{display:none}
             <button id="bAR" aria-label="Realidad aumentada" style="font-size:12px;font-weight:800">AR</button>
           </div>
         </div>
+        <button class="compass-ask hidden" id="bCompass">🧭 Activar brújula para girar el mapa</button>
         <div class="navcard">
           <div class="turn" id="turnIc">↑</div>
           <div class="tx"><b id="turnTx">Calculando ruta…</b><span id="turnSub"></span></div>
@@ -1137,8 +1141,7 @@ function addRouteLayers(){
   if(!map) return;
   if(curLayer==="det"){ try{ const lyr=map.getStyle().layers.find(l=>l.type==="fill-extrusion"); if(lyr) map.setPaintProperty(lyr.id,"fill-extrusion-opacity",0.75); }catch(e){} }
   if(!map.getSource("route")) map.addSource("route",{type:"geojson",data:routeGeo()});
-  if(!map.getLayer("route-case")) map.addLayer({id:"route-case",type:"line",source:"route",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#5a3c12","line-width":11,"line-opacity":.85}});
-  if(!map.getLayer("route-line")) map.addLayer({id:"route-line",type:"line",source:"route",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#f0b13d","line-width":7}});
+  if(!map.getLayer("route-line")) map.addLayer({id:"route-line",type:"line",source:"route",layout:{"line-cap":"round","line-join":"round"},paint:{"line-color":"#4285f4","line-width":["interpolate",["linear"],["zoom"],14,5,18,11],"line-dasharray":[0,1.9]}});
 }
 function routeGeo(){ const coords = route&&route.line ? route.line.map(p=>[p.lng,p.lat]) : []; return {type:"Feature",geometry:{type:"LineString",coordinates:coords}}; }
 function drawRoute(){ if(map&&map.getSource("route")) map.getSource("route").setData(routeGeo()); }
@@ -1148,24 +1151,24 @@ let camHead=null;
 function smoothCam(h){ if(h==null) return camHead; if(camHead==null) return camHead=h; const d=((h-camHead+540)%360)-180; camHead=(camHead+d*0.35+360)%360; return camHead; }
 function drawMe(){
   if(!map||!pos) return;
-  if(!meMarker){ meEl=document.createElement("div"); meEl.className="me2"; meEl.innerHTML='<div class="halo"></div><svg viewBox="0 0 40 40"><path d="M20 3 L33 35 L20 27 L7 35 Z" fill="#2f8cff" stroke="#fff" stroke-width="3" stroke-linejoin="round"/></svg>'; meMarker=new maplibregl.Marker({element:meEl,rotationAlignment:"map",pitchAlignment:"map"}).setLngLat([pos.lng,pos.lat]).addTo(map); }
+  if(!meMarker){ meEl=document.createElement("div"); meEl.className="me2 nobeam"; meEl.innerHTML='<div class="beam"></div><div class="halo"></div><div class="dot"></div>'; meMarker=new maplibregl.Marker({element:meEl,rotationAlignment:"map",pitchAlignment:"map"}).setLngLat([pos.lng,pos.lat]).addTo(map); }
   meMarker.setLngLat([pos.lng,pos.lat]);
   const h=smoothCam(heading);
-  meMarker.setRotation(h==null?0:h);
+  meMarker.setRotation(h==null?0:h); meEl.classList.toggle("nobeam",h==null);
   camUpdate();
 }
 function camUpdate(force){
   if(!map||!pos||!follow) return;
   const now=Date.now(); if(!force && now-lastCam<450) return; lastCam=now;
   const H=map.getContainer().clientHeight;
-  map.easeTo({center:[pos.lng,pos.lat], bearing: headUp&&camHead!=null?camHead:0, pitch: headUp?58:0, zoom: Math.max(map.getZoom(), headUp?17.6:17), padding:{top: headUp?Math.round(H*0.42):0, bottom: headUp?40:0, left:0, right:0}, duration: force?800:450, easing:t=>t});
+  map.easeTo({center:[pos.lng,pos.lat], bearing: headUp&&camHead!=null?camHead:0, pitch: headUp?58:0, zoom: Math.max(map.getZoom(), headUp?17.6:17), padding:{top: Math.round(H*(headUp?0.28:0.12)), bottom: Math.round(H*0.12), left:0, right:0}, duration: force?800:450, easing:t=>t});
 }
 function mapSetView(p,z){ if(map) map.jumpTo({center:[p.lng,p.lat],zoom:z||17}); }
 function fitRoute(){ if(!map) return; const pts=[[STOPS[idx].lng,STOPS[idx].lat]]; if(pos) pts.push([pos.lng,pos.lat]); if(route&&route.line) route.line.forEach(p=>pts.push([p.lng,p.lat])); const b=pts.reduce((bb,c)=>bb.extend(c),new maplibregl.LngLatBounds(pts[0],pts[0])); map.fitBounds(b,{padding:70,bearing:0,pitch:0,maxZoom:18,duration:700}); }
 $("#bLayer").onclick=()=>{ if(!map) return; curLayer=curLayer==="det"?"sat":"det"; map.setStyle(curLayer==="det"?STYLE_DET:STYLE_SAT); $("#bLayer").textContent=curLayer==="det"?"🛰️":"🗺️"; toast(curLayer==="det"?"Mapa 3D":"Vista satélite"); };
 $("#bFollow").onclick=()=>{ follow=true; $("#bFollow").classList.add("on"); camUpdate(true); };
 $("#bFit").onclick=()=>{ follow=false; $("#bFollow").classList.remove("on"); fitRoute(); };
-$("#bHead").onclick=()=>{ headUp=!headUp; $("#bHead").textContent=headUp?"🧭":"N"; $("#bHead").classList.toggle("on",headUp); follow=true; $("#bFollow").classList.add("on"); toast(headUp?"El mapa gira según hacia dónde miran":"Norte arriba"); camUpdate(true); };
+$("#bHead").onclick=()=>{ if(!compassOn) startCompass(); headUp=!headUp; $("#bHead").textContent=headUp?"🧭":"N"; $("#bHead").classList.toggle("on",headUp); follow=true; $("#bFollow").classList.add("on"); toast(headUp?"El mapa gira según hacia dónde miran":"Norte arriba"); camUpdate(true); };
 function setFull(on){ mapFull=on; document.body.classList.toggle("mapfull",on); $("#bFull").textContent=on?"✕":"⛶"; setTimeout(()=>{ if(map){ map.resize(); camUpdate(true); } },80); }
 $("#bFull").onclick=()=>setFull(!mapFull);
 
@@ -1370,7 +1373,7 @@ function startGeo(onFirst){
   try{ navigator.geolocation.watchPosition(p=>{
       const np={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy};
       const first=!pos; pos=np;
-      if(!compassOn && p.coords.heading!=null && !isNaN(p.coords.heading) && p.coords.speed>0.6) heading=p.coords.heading;
+      if(!compassOn && p.coords.heading!=null && !isNaN(p.coords.heading) && p.coords.heading>=0 && p.coords.speed>0.4) heading=p.coords.heading;
       setGps(); updateMotion(pos); drawMe();
       if(first){ if(onFirst) onFirst(pos); mapSetView(pos,17); if(mode==="walk"&&!waitingStart) computeRoute("new"); }
       if(!waitingStart) tick();
@@ -1568,6 +1571,9 @@ document.querySelectorAll("#provSeg button").forEach(b=>b.onclick=()=>{ prefs.pr
 $("#bPremSave").onclick=()=>{ prefs.key=$("#apiKey").value.trim(); prefs.ovoice=$("#oVoice").value; prefs.evoice=$("#eVoice").value.trim(); store.set("toledo_prefs",prefs); premiumBroken=false; audioCache.clear(); syncPrem(); unlockAudio(); say("Hola, soy su guía en Toledo. Así va a sonar la voz durante el resto del paseo. ¿Seguimos?","Prueba de voz premium"); };
 const _openSheet=openSheet; openSheet=function(on){ _openSheet(on); if(on) syncPrem(); };
 $("#bSet").onclick=()=>openSheet(true); $("#sheetBg").onclick=()=>openSheet(false);
+
+$("#bCompass").onclick=async()=>{ await startCompass(); $("#bCompass").classList.add("hidden"); headUp=true; $("#bHead").textContent="🧭"; $("#bHead").classList.add("on"); follow=true; $("#bFollow").classList.add("on"); setTimeout(()=>{ if(!compassOn) toast("No llega la brújula. En el iPhone: Ajustes → Safari → Movimiento y orientación, actívenlo y recarguen."); },2500); };
+setInterval(()=>{ if(!$("#app").classList.contains("hidden") && mode==="walk") $("#bCompass").classList.toggle("hidden", compassOn); },2000);
 
 /* ======================= LANDING ======================= */
 (function landing(){
