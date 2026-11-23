@@ -1,0 +1,83 @@
+<!-- ================= APP ================= -->
+<section id="app" class="hidden">
+  <div class="topbar">
+    <div class="tb-row">
+      <button class="tb-title" id="home">Toledo a pie</button>
+      <div class="tb-right">
+        <span class="pill" id="clock">--:--</span>
+        <span class="pill" id="gps">GPS…</span>
+        <button class="iconbtn" id="bList" aria-label="Recorrido">☰</button>
+        <button class="iconbtn" id="bSet" aria-label="Ajustes">⚙️</button>
+      </div>
+    </div>
+    <div class="prog" id="prog"></div>
+  </div>
+
+  <div class="wrap">
+    <!-- CAMINANDO: MAPA -->
+    <div id="walk">
+      <div class="mapwrap">
+        <div id="map"></div>
+        <div class="mapover">
+          <div class="street" id="streetBox"><small>Están en</small><b id="streetName">Buscando calle…</b></div>
+          <div class="mapbtns">
+            <button id="bFollow" class="on" aria-label="Seguirme">◎</button>
+            <button id="bFit" aria-label="Ver ruta">⤢</button>
+          </div>
+        </div>
+        <div class="navcard">
+          <div class="turn" id="turnIc">↑</div>
+          <div class="tx"><b id="turnTx">Calculando ruta…</b><span id="turnSub"></span></div>
+          <div class="dd"><b id="wDist">—</b><span id="wEta"></span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="nexthead">
+          <div class="th" id="wThumb"></div>
+          <div style="flex:1;min-width:0"><div class="kick" id="wKick"></div><h2 id="wName"></h2></div>
+        </div>
+        <div class="statusrow" id="wBadges"></div>
+        <div class="statusrow"><span class="pill" id="moveState">—</span><span class="pill" id="storyState">Historias: 0</span></div>
+        <div class="dir" id="wDir"></div>
+        <div class="btns">
+          <a class="btn" id="bMaps" target="_blank" rel="noopener">🗺️ Google Maps</a>
+          <button class="btn" id="bLeg">🎧 Contame</button>
+          <button class="btn gold full" id="bArrive">📍 Llegamos</button>
+        </div>
+        <p class="note" id="manualNote"></p>
+        <div class="feed" id="feed"></div>
+        <button class="more" id="bSkip" style="display:block;margin:6px auto 0;color:var(--mute)">Saltar esta parada ⏭</button>
+      </div>
+    </div>
+
+    <!-- EN LA PARADA -->
+    <div id="stop" class="hidden">
+      <div class="hero fade" style="min-height:330px"><div class="bg" id="sBg"></div>
+        <div class="in"><div class="kick" id="sKick"></div><div class="hname" id="sName"></div><div class="badges" id="sBadges"></div></div>
+      </div>
+      <div class="panel">
+        <button class="listen" id="bPlay" style="width:100%;text-align:left">
+          <span class="pl" id="plIcon">▶</span>
+          <span class="lt"><b id="plTitle">Escuchar la historia</b><span id="plSub">Narración</span></span>
+          <span class="wave"><i></i><i></i><i></i><i></i><i></i></span>
+        </button>
+        <div class="narr clamp" id="sNarr"></div>
+        <button class="more" id="bMore">Leer todo ▾</button>
+      </div>
+      <div class="box reto"><h3>🎯 Reto</h3><div id="sRetoTxt"></div><button class="more" id="bAns">Ver respuesta</button><div class="ans hidden" id="sAns"></div></div>
+      <div class="box"><h3>💡 Datos prácticos</h3><div id="sTipTxt" style="color:var(--mute);font-size:15px"></div></div>
+      <div class="btns" style="margin-top:14px"><button class="btn gold full" id="bNext"></button></div>
+    </div>
+
+    <!-- LISTA -->
+    <div id="list" class="list hidden" style="margin-top:6px"></div>
+  </div>
+</section>
+
+<div class="player hidden" id="player">
+  <button class="pbtn main" id="pPause" aria-label="Pausa">⏸</button>
+  <div class="np"><b id="npT">Listo</b><span id="npS"></span></div>
+  <button class="pbtn" id="pBack" aria-label="Repetir frase">↺</button>
+  <button class="pbtn" id="pStop" aria-label="Detener">■</button>
+</div>

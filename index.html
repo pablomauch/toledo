@@ -11,6 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400;1,9..144,600&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
   --bg:#140f0b; --bg2:#1c1510; --card:#221a14; --card2:#2c221a; --line:rgba(255,236,210,.10);
@@ -173,10 +175,47 @@ a{color:inherit}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .fade{animation:fi .45s ease both}
 @keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ===== MAPA ===== */
+.mapwrap{position:relative;border-radius:24px;overflow:hidden;margin-top:4px;border:1px solid var(--line);background:#1a1612}
+#map{height:52svh;min-height:320px;width:100%;background:#1a1612}
+.leaflet-container{font-family:var(--sans)}
+.leaflet-control-attribution{font-size:9px!important;background:rgba(20,15,11,.6)!important;color:#9a8a76!important}
+.leaflet-control-attribution a{color:#c9b79e!important}
+.mk{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;background:#3a2d22;color:var(--gold2);border:2px solid rgba(243,207,134,.6);box-shadow:0 4px 12px rgba(0,0,0,.5)}
+.mk.d{background:var(--ok);color:#102010;border-color:#d9f2d4}
+.mk.c{background:var(--gold);color:#22170a;border-color:#fff;transform:scale(1.25);box-shadow:0 0 0 6px rgba(227,178,90,.3),0 6px 16px rgba(0,0,0,.5)}
+.me{width:22px;height:22px;position:relative}
+.me .dot{position:absolute;inset:3px;border-radius:50%;background:#4aa3ff;border:3px solid #fff;box-shadow:0 0 0 6px rgba(74,163,255,.25)}
+.me .cone{position:absolute;left:50%;top:50%;width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:34px solid rgba(74,163,255,.35);transform-origin:50% 100%;margin-left:-14px;margin-top:-34px;display:none}
+.mapover{position:absolute;left:10px;right:10px;top:10px;z-index:500;display:flex;gap:8px;align-items:flex-start;pointer-events:none}
+.street{pointer-events:auto;background:rgba(20,15,11,.82);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:14px;padding:8px 12px;font-size:13px;line-height:1.25;max-width:70%}
+.street small{display:block;color:var(--mute);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:700}
+.street b{font-weight:700}
+.mapbtns{margin-left:auto;display:flex;flex-direction:column;gap:8px;pointer-events:auto}
+.mapbtns button{width:42px;height:42px;border-radius:12px;background:rgba(20,15,11,.85);border:1px solid var(--line);font-size:17px;display:flex;align-items:center;justify-content:center}
+.mapbtns button.on{background:var(--gold);color:#22170a}
+.navcard{position:absolute;left:10px;right:10px;bottom:10px;z-index:500;background:rgba(20,15,11,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,236,210,.14);border-radius:18px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+.turn{width:48px;height:48px;border-radius:14px;background:var(--gold);color:#22170a;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;flex:none}
+.navcard .tx{flex:1;min-width:0;line-height:1.25}
+.navcard .tx b{display:block;font-size:16px}
+.navcard .tx span{font-size:12.5px;color:var(--mute)}
+.navcard .dd{text-align:right;flex:none}
+.navcard .dd b{font-family:var(--serif);font-size:26px;font-weight:800;line-height:1}
+.navcard .dd span{display:block;font-size:11px;color:var(--mute)}
+.statusrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.pill.blue{color:#d8ebff;background:rgba(74,163,255,.18);border-color:rgba(74,163,255,.4)}
+.nexthead{display:flex;align-items:center;gap:12px}
+.nexthead .th{width:58px;height:58px;border-radius:14px;background-size:cover;background-position:center;flex:none;background-color:#2c221a}
+.nexthead .kick{font-size:10.5px}
+.nexthead h2{font-family:var(--serif);font-weight:800;font-size:26px;line-height:1.02;margin:2px 0 0;letter-spacing:-.01em}
+.feed{margin-top:12px}
+.feed .fi{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14px;color:var(--mute)}
+.feed .fi b{color:var(--ink);font-weight:700}
+.feed .fi .ic{flex:none}
 </style>
 </head>
 <body>
-
 <!-- ================= LANDING ================= -->
 <section id="landing">
   <div class="slides" id="slides"></div>
@@ -214,11 +253,12 @@ a{color:inherit}
       <li>Acepten los permisos de <b>ubicación</b> y <b>brújula</b>.</li>
       <li>Pantalla encendida: si se bloquea, la voz se corta.</li>
       <li>La <b>pulsera turística</b> cubre varios monumentos de la ruta.</li>
-      <li>Elijan la voz que más les guste en ⚙️ (arriba a la derecha, ya dentro).</li>
+      <li>Elijan la voz en ⚙️. Si entran a un local, la guía se pausa sola y retoma al caminar.</li>
     </ul>
     <p class="credits" id="credits"></p>
   </div>
 </section>
+
 
 <!-- ================= APP ================= -->
 <section id="app" class="hidden">
@@ -236,25 +276,39 @@ a{color:inherit}
   </div>
 
   <div class="wrap">
-    <!-- CAMINANDO -->
+    <!-- CAMINANDO: MAPA -->
     <div id="walk">
-      <div class="hero fade" id="wHero"><div class="bg" id="wBg"></div>
-        <div class="in"><div class="kick" id="wKick"></div><div class="hname" id="wName"></div><div class="badges" id="wBadges"></div></div>
-      </div>
-      <div class="panel">
-        <div class="navgrid">
-          <div class="compass"><div class="ring"></div><span class="nm" id="northMark">N</span>
-            <svg id="arrow" viewBox="0 0 100 100"><defs><linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3cf86"/><stop offset="1" stop-color="#c98f2f"/></linearGradient></defs><path d="M50 6 L80 84 L50 66 L20 84 Z" fill="url(#ag)"/></svg>
+      <div class="mapwrap">
+        <div id="map"></div>
+        <div class="mapover">
+          <div class="street" id="streetBox"><small>Están en</small><b id="streetName">Buscando calle…</b></div>
+          <div class="mapbtns">
+            <button id="bFollow" class="on" aria-label="Seguirme">◎</button>
+            <button id="bFit" aria-label="Ver ruta">⤢</button>
           </div>
-          <div><div class="dnum" id="wDist">—</div><div class="dsub" id="wDistSub">Buscando ubicación…</div></div>
         </div>
+        <div class="navcard">
+          <div class="turn" id="turnIc">↑</div>
+          <div class="tx"><b id="turnTx">Calculando ruta…</b><span id="turnSub"></span></div>
+          <div class="dd"><b id="wDist">—</b><span id="wEta"></span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="nexthead">
+          <div class="th" id="wThumb"></div>
+          <div style="flex:1;min-width:0"><div class="kick" id="wKick"></div><h2 id="wName"></h2></div>
+        </div>
+        <div class="statusrow" id="wBadges"></div>
+        <div class="statusrow"><span class="pill" id="moveState">—</span><span class="pill" id="storyState">Historias: 0</span></div>
         <div class="dir" id="wDir"></div>
         <div class="btns">
-          <a class="btn" id="bMaps" target="_blank" rel="noopener">🗺️ Maps</a>
-          <button class="btn" id="bLeg">🎧 Historia</button>
+          <a class="btn" id="bMaps" target="_blank" rel="noopener">🗺️ Google Maps</a>
+          <button class="btn" id="bLeg">🎧 Contame</button>
           <button class="btn gold full" id="bArrive">📍 Llegamos</button>
         </div>
         <p class="note" id="manualNote"></p>
+        <div class="feed" id="feed"></div>
         <button class="more" id="bSkip" style="display:block;margin:6px auto 0;color:var(--mute)">Saltar esta parada ⏭</button>
       </div>
     </div>
@@ -267,7 +321,7 @@ a{color:inherit}
       <div class="panel">
         <button class="listen" id="bPlay" style="width:100%;text-align:left">
           <span class="pl" id="plIcon">▶</span>
-          <span class="lt"><b id="plTitle">Escuchar la historia</b><span id="plSub">Narración completa · ~3 min</span></span>
+          <span class="lt"><b id="plTitle">Escuchar la historia</b><span id="plSub">Narración</span></span>
           <span class="wave"><i></i><i></i><i></i><i></i><i></i></span>
         </button>
         <div class="narr clamp" id="sNarr"></div>
@@ -306,8 +360,8 @@ a{color:inherit}
   <div class="btns"><button class="btn full" id="bTest">🔊 Probar voz</button></div>
 </div>
 
-<div class="toast" id="toast"></div>
 
+<div class="toast" id="toast"></div>
 <script>
 const STOPS = [
 {
@@ -534,7 +588,6 @@ Hoy caminaron por Roma, por los visigodos, por al-Ándalus, por la judería, por
 const INTRO = "Hola. Soy su guía por Toledo. Durante las próximas horas los voy a ir llevando de parada en parada. Mientras caminen, les cuento historias del camino; cuando lleguen, les cuento la historia del lugar. Si tienen ubicación activada, yo me doy cuenta sola de que llegaron. Si no, toquen el botón Llegamos. Vamos.";
 
 
-
 /* ======================= FOTOS (Wikimedia Commons) ======================= */
 const WM = f => "https://commons.wikimedia.org/wiki/Special:FilePath/" + encodeURIComponent(f) + "?width=1400";
 const PH = {
@@ -562,197 +615,397 @@ const SLIDES = [
 ];
 const SHORT = { bisagra:"La puerta imperial de Carlos V", sol:"Mudéjar, siglo XIV", cristo:"Una mezquita del año 999", zoco:"El corazón de la ciudad", alcazar:"La cima de Toledo", catedral:"Gótico · 800 años", santotome:"El Greco y el conde de Orgaz", transito:"La judería · por fuera", blanca:"Sinagoga del siglo XII", sanjuan:"Los Reyes Católicos", puente:"Atardecer sobre el Tajo" };
 
+
+/* ======================= HISTORIAS POR CALLE ======================= */
+/* k = palabras clave que se buscan en el nombre de la calle (sin tildes, minúsculas) */
+const STREETS = [
+ {id:"arrabal", k:["real del arrabal"], t:"Están en la calle Real del Arrabal. Un arrabal era un barrio que quedaba fuera de las murallas. Aquí, al pie de la ciudad, vivían artesanos, comerciantes y viajeros que llegaban por el camino del norte, y por eso esta calle tuvo siempre posadas y movimiento."},
+ {id:"cristoluz", k:["cristo de la luz"], t:"Esta cuesta es la calle del Cristo de la Luz. Por aquí subía uno de los accesos más antiguos de la ciudad musulmana, y por aquí, según la leyenda, entró Alfonso Sexto tras conquistar Toledo en 1085."},
+ {id:"carlosv", k:["carlos v"], t:"Van por la cuesta de Carlos Quinto. El emperador quiso convertir Toledo en una capital a su medida, y su gran proyecto fue justamente el Alcázar que tienen enfrente. Aunque, curiosamente, pasó muy poco tiempo viviendo en él: su corte era itinerante y viajaba por toda Europa."},
+ {id:"comercio", k:["comercio","calle ancha"], t:"Están en la calle del Comercio, que los toledanos llaman también la calle Ancha, aunque de ancha tiene poco. Durante siglos fue el eje comercial de la ciudad, entre Zocodover y la catedral. Fíjense en los escaparates de damasquinado: es una técnica de origen oriental que incrusta hilos de oro y plata sobre acero negro, y es una de las artesanías típicas de Toledo."},
+ {id:"hombrepalo", k:["hombre de palo"], t:"Calle Hombre de Palo. Acuérdense de Juanelo Turriano y su autómata de madera que, según la leyenda, caminaba solo por aquí pidiendo limosna. Ahora miren al fondo: la catedral está a punto de aparecer."},
+ {id:"arcopalacio", k:["arco de palacio"], t:"Este es el Arco de Palacio. El pasadizo que ven arriba une el Palacio Arzobispal con la catedral: así el arzobispo podía ir de su casa al templo sin pisar la calle."},
+ {id:"ayto", k:["plaza del ayuntamiento"], t:"Están en la plaza del Ayuntamiento. A un lado, la catedral; enfrente, el Ayuntamiento, en cuyo diseño participó Jorge Manuel, el hijo de El Greco; y al costado, el Palacio Arzobispal. Poder civil y poder religioso, frente a frente."},
+ {id:"cisneros", k:["cardenal cisneros"], t:"Esta calle lleva el nombre del cardenal Cisneros, arzobispo de Toledo, confesor de Isabel la Católica y regente de Castilla. Fundó la Universidad de Alcalá e impulsó la Biblia Políglota, impresa en hebreo, griego, latín y arameo. Un hombre muy poderoso, que dicen que dormía en el suelo vestido de fraile."},
+ {id:"trinidad", k:["trinidad"], t:"Van por la calle de la Trinidad, una de las que bajan desde la catedral hacia el oeste. A partir de aquí, la ciudad se vuelve más silenciosa: dejan el Toledo de los grandes templos y se acercan al de los barrios y conventos."},
+ {id:"salvador", k:["san salvador"], t:"Calle San Salvador. La iglesia de El Salvador, aquí cerca, también fue mezquita antes de ser iglesia, y en su interior conserva restos de arcos de aquella época. Toledo está llena de edificios con dos o tres vidas."},
+ {id:"santotome_c", k:["santo tome"], t:"Están en la calle de Santo Tomé, y huele a almendra. Esta calle es famosa por sus obradores de mazapán, algunos con más de un siglo de historia. El mazapán toledano tiene denominación propia y una tradición muy ligada a los conventos de monjas. Si no lo probaron todavía, este es el lugar."},
+ {id:"alfileritos", k:["alfileritos"], t:"Calle de Alfileritos. Cuenta la tradición que en una hornacina de esta calle había una imagen de la Virgen, y que las muchachas solteras le arrojaban alfileres para pedirle novio. Si el alfiler quedaba enganchado, había boda en el horizonte."},
+ {id:"plata", k:["calle de la plata","plata"], t:"Calle de la Plata. Su nombre recuerda a los plateros y artesanos del metal que trabajaban en esta zona. Toledo fue durante siglos una ciudad de oficios: espaderos, plateros, tejedores de seda."},
+ {id:"reyescat", k:["reyes catolicos"], t:"Van por la calle de los Reyes Católicos, el eje de la antigua judería. Por esta misma calle pasaban los vecinos judíos camino de sus sinagogas. En el siglo catorce, la judería de Toledo era una de las más grandes de Castilla, con varias sinagogas, escuelas y su propia carnicería."},
+ {id:"samuel", k:["samuel levi","samuel leví"], t:"Calle Samuel Leví, el nombre del tesorero del rey Pedro Primero que mandó construir la Sinagoga del Tránsito. Un judío que llegó a manejar las finanzas de Castilla, y que terminó cayendo en desgracia."},
+ {id:"juderia", k:["juderia","sinagoga","angel"], t:"Están en plena judería. Miren el suelo: los azulejos con la menorá y la palabra Sefarad marcan el recorrido del antiguo barrio judío. Sefarad era el nombre hebreo de la península ibérica, y de ahí viene la palabra sefardí."},
+ {id:"sanmartin", k:["san martin"], t:"Bajan hacia el puente de San Martín. Vayan despacio y miren a la izquierda y a la derecha: el Tajo se encajona entre rocas y la ciudad queda colgada arriba. Es la postal clásica de Toledo."},
+ {id:"zocodover_c", k:["zocodover"], t:"Atraviesan Zocodover, el antiguo mercado de las bestias, que fue durante siglos la plaza de las fiestas, los toros y las noticias."},
+ {id:"ciudad", k:["calle de la ciudad","ciudad"], t:"Calle de la Ciudad. Une la zona de la catedral con el Ayuntamiento. Y si vuelven en junio, por estas calles pasa el Corpus Christi, la gran fiesta de Toledo, con toldos tendidos sobre las calles y la custodia de la catedral en procesión."},
+ {id:"tornerias", k:["tornerias"], t:"Calle de las Tornerías. Aquí trabajaban los torneros, artesanos que daban forma a la madera. Y en esta calle se conserva otra pequeña mezquita, la de Tornerías, que muy poca gente conoce."},
+ {id:"sillería", k:["silleria"], t:"Calle de la Sillería. Como tantas calles de Toledo, su nombre recuerda un oficio: se cree que aquí trabajaban los guarnicioneros que hacían sillas de montar."}
+];
+
+/* ======================= DATOS AL PASO (relleno mientras caminan) ======================= */
+const FILL = [
+ {id:"espadas", t:"Un dato mientras caminan: el acero de Toledo fue famoso en toda Europa. Las espadas toledanas se templaban en las aguas del Tajo y eran tan flexibles que, según se decía, podían doblarse sin romperse. Todavía hoy van a ver tiendas de espadas por todas partes."},
+ {id:"cobertizos", t:"Si pasan bajo un túnel o un pasadizo entre casas, eso es un cobertizo. Toledo tiene muchos: eran habitaciones construidas sobre la calle, que unían dos edificios. Ganaban espacio en una ciudad sin lugar para crecer, y de paso daban sombra."},
+ {id:"patios", t:"Detrás de muchas de estas puertas cerradas hay patios con columnas, plantas y azulejos. Es la herencia de la casa islámica: todo hacia adentro, nada hacia la calle. Si ven un portón abierto, asómense con discreción."},
+ {id:"subsuelo", t:"Bajo sus pies hay otro Toledo. La ciudad tiene cuevas, baños árabes, pozos y restos romanos en el subsuelo. Muchas casas y tiendas tienen sótanos que son, en realidad, construcciones de hace mil años."},
+ {id:"cuestas", t:"Si las piernas empiezan a pesar, no es su imaginación. Toledo está sobre un peñón de granito y tiene cuestas por todas partes. Los toledanos dicen que aquí nadie necesita gimnasio."},
+ {id:"escuela", t:"Piensen esto mientras caminan: hace ochocientos años, en estas calles, traductores judíos, musulmanes y cristianos trabajaban juntos pasando libros del árabe al latín. Gracias a ellos, Europa volvió a leer a Aristóteles y aprendió astronomía, medicina y matemáticas."},
+ {id:"greco", t:"El Greco caminó estas mismas calles durante casi cuarenta años. Si en sus cuadros ven un Toledo tormentoso, con nubes y luces raras, es este mismo: lo pintó en su famosa Vista de Toledo, que hoy está en Nueva York."},
+ {id:"cervantes", t:"Cervantes conoció bien Toledo y la menciona varias veces. En el Quijote, el narrador cuenta que encontró el manuscrito original de la historia, escrito en árabe, en un mercado de Toledo, y que pagó a un morisco para que se lo tradujera."},
+ {id:"capital", t:"Hasta 1561, Toledo fue la ciudad más importante de Castilla y sede habitual de la corte. Ese año, Felipe Segundo fijó la capital en Madrid. Toledo perdió poder, pero ganó algo: al no crecer, se conservó casi intacta. Por eso hoy pueden caminar una ciudad medieval de verdad."}
+];
+
 /* ======================= ESTADO ======================= */
 const $ = s => document.querySelector(s);
-let idx=0, mode="walk", visited={}, pos=null, heading=null, compassOn=false;
-let announced={}, autoVoice=true, rate=1.0, lastSpokenDist=null, view="guide";
+let idx=0, mode="walk", visited={}, pos=null, heading=null, compassOn=false, view="guide";
+let autoVoice=true, rate=1.0;
 const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const prefs = store.get("toledo_prefs")||{};
+const prefs=store.get("toledo_prefs")||{};
 if(prefs.rate) rate=prefs.rate; if(prefs.auto===false) autoVoice=false;
-
-/* ======================= LANDING ======================= */
-(function landing(){
-  const box=$("#slides"), dots=$("#dots");
-  SLIDES.forEach((s,i)=>{ const d=document.createElement("div"); d.className="slide"+(i%2?" alt":""); d.style.backgroundImage=`url("${s[0]}")`; box.appendChild(d); dots.appendChild(document.createElement("b")); const im=new Image(); im.src=s[0]; });
-  let k=0; const els=box.children, ds=dots.children;
-  function show(n){ [...els].forEach((e,i)=>{ if(i===n){ e.classList.remove("on"); void e.offsetWidth; e.classList.add("on"); } else e.classList.remove("on"); }); [...ds].forEach((e,i)=>e.classList.toggle("on",i===n)); const c=$("#cap"); c.style.opacity=0; setTimeout(()=>{c.textContent=SLIDES[n][1]; c.style.opacity=1;},400); }
-  show(0); landing.t=setInterval(()=>{ if($("#landing").classList.contains("hidden")) return; k=(k+1)%SLIDES.length; show(k); },5200);
-  $("#route").innerHTML = STOPS.map((s,i)=>`<div class="rc"><div class="ph" style="background-image:url('${IMG[s.id]}')"><span class="n">${i+1}</span></div><div class="tx"><b>${s.name}</b><span>${SHORT[s.id]||""}</span></div></div>`).join("");
-  $("#credits").textContent = "Fotos: Wikimedia Commons (licencias CC BY / CC BY-SA), autores: Rafesmar, Weldon Kennedy, Ввласенко, Fernando, Querubin Saldaña, Bernard Gagnon, J. L. Filpo Cabana y otros. Algunas fotos de las paradas son vistas generales de la ciudad.";
-})();
+const today=new Date().toDateString();
+let told = (store.get("toledo_told")||{}); if(told.day!==today) told={day:today};
+function markTold(k){ told[k]=1; store.set("toledo_told",told); }
+const strip = s => (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
 
 /* ======================= VOZ ======================= */
 const synth=window.speechSynthesis;
-let voice=null, voices=[], queue=[], cur="", speaking=false, paused=false, nowLabel="";
-const REG = {"es-MX":["🇲🇽","México"],"es-US":["🇺🇸","EE. UU. (latino)"],"es-419":["🌎","Latinoamérica"],"es-AR":["🇦🇷","Argentina"],"es-CL":["🇨🇱","Chile"],"es-CO":["🇨🇴","Colombia"],"es-PE":["🇵🇪","Perú"],"es-VE":["🇻🇪","Venezuela"],"es-UY":["🇺🇾","Uruguay"],"es-ES":["🇪🇸","España"]};
+let voice=null, voices=[], queue=[], cur="", speaking=false, paused=false, nowLabel="", gen=0, resumeAfter=null, lastSpeechEnd=Date.now();
+const REG={"es-MX":["🇲🇽","México"],"es-US":["🇺🇸","EE. UU. (latino)"],"es-419":["🌎","Latinoamérica"],"es-AR":["🇦🇷","Argentina"],"es-CL":["🇨🇱","Chile"],"es-CO":["🇨🇴","Colombia"],"es-PE":["🇵🇪","Perú"],"es-VE":["🇻🇪","Venezuela"],"es-UY":["🇺🇾","Uruguay"],"es-ES":["🇪🇸","España"]};
 const ORDER=["es-AR","es-CL","es-UY","es-419","es-MX","es-US","es-CO","es-PE","es-VE"];
 const norm=l=>(l||"").replace("_","-");
-function score(v){ const l=norm(v.lang); let i=ORDER.findIndex(o=>l.toLowerCase().startsWith(o.toLowerCase())); let s = i<0 ? (l.toLowerCase().startsWith("es-es")?50:60) : i*2; if(/premium|enhanced|mejorada|neural|natural|online/i.test(v.name)) s-=1.5; if(/eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|bad|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|bahh|fred|junior|kathy|ralph/i.test(v.name)) s+=30; return s; }
-function loadVoices(){
-  if(!synth) return;
-  voices = synth.getVoices().filter(v=>norm(v.lang).toLowerCase().startsWith("es")).sort((a,b)=>score(a)-score(b));
-  if(prefs.voice){ const v=voices.find(v=>v.name===prefs.voice); if(v) voice=v; }
-  if(!voice) voice=voices[0]||null;
-  renderVoices();
-}
+function score(v){const l=norm(v.lang).toLowerCase();let i=ORDER.findIndex(o=>l.startsWith(o.toLowerCase()));let s=i<0?(l.startsWith("es-es")?50:60):i*2;if(/premium|enhanced|mejorada|neural|natural|online/i.test(v.name))s-=1.5;if(/eddy|flo|grandma|grandpa|reed|rocko|sandy|shelley|bad|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|albert|bahh|fred|junior|kathy|ralph/i.test(v.name))s+=30;return s;}
+function loadVoices(){ if(!synth) return; voices=synth.getVoices().filter(v=>norm(v.lang).toLowerCase().startsWith("es")).sort((a,b)=>score(a)-score(b)); if(prefs.voice){const v=voices.find(v=>v.name===prefs.voice); if(v) voice=v;} if(!voice) voice=voices[0]||null; renderVoices(); }
 if(synth){ loadVoices(); synth.onvoiceschanged=loadVoices; setTimeout(loadVoices,800); }
 function renderVoices(){
   const box=$("#vlist"); if(!box) return;
   if(!voices.length){ box.innerHTML=`<div class="note">No se encontraron voces en español en este teléfono.</div>`; return; }
-  box.innerHTML = voices.slice(0,12).map((v,i)=>{ const l=norm(v.lang); const r=Object.keys(REG).find(k=>l.toLowerCase()===k.toLowerCase()); const [fl,rg]=r?REG[r]:["🌐",l];
-    return `<button class="vopt ${voice&&v.name===voice.name?"on":""}" data-i="${i}"><span class="fl">${fl}</span><span><b>${v.name.replace(/\(.*\)/,"").trim()}</b><span>${rg}${/premium|enhanced|mejorada|neural/i.test(v.name)?" · alta calidad":""}</span></span></button>`; }).join("");
-  box.querySelectorAll(".vopt").forEach(b=>b.onclick=()=>{ voice=voices[+b.dataset.i]; prefs.voice=voice.name; store.set("toledo_prefs",prefs); renderVoices(); say("Hola, soy su guía por Toledo. ¿Les gusta cómo sueno?","Prueba de voz"); });
+  box.innerHTML=voices.slice(0,12).map((v,i)=>{const l=norm(v.lang);const r=Object.keys(REG).find(k=>l.toLowerCase()===k.toLowerCase());const [fl,rg]=r?REG[r]:["🌐",l];
+    return `<button class="vopt ${voice&&v.name===voice.name?"on":""}" data-i="${i}"><span class="fl">${fl}</span><span><b>${v.name.replace(/\(.*\)/,"").trim()}</b><span>${rg}${/premium|enhanced|mejorada|neural/i.test(v.name)?" · alta calidad":""}</span></span></button>`;}).join("");
+  box.querySelectorAll(".vopt").forEach(b=>b.onclick=()=>{voice=voices[+b.dataset.i];prefs.voice=voice.name;store.set("toledo_prefs",prefs);renderVoices();say("Hola, soy su guía por Toledo. ¿Les gusta cómo sueno?","Prueba de voz");});
 }
-function chunk(text){
-  const clean=text.replace(/<[^>]+>/g,"");
-  const parts=clean.replace(/([\.\?\!:])\s+/g,"$1|").split(/\||\n+/).map(s=>s.trim()).filter(Boolean);
-  const out=[]; let buf="";
-  for(const p of parts){ if((buf+" "+p).length>200&&buf){out.push(buf);buf=p}else{buf=buf?buf+" "+p:p} }
-  if(buf) out.push(buf); return out;
-}
-function say(text,label){
-  if(!synth){ toast("Este navegador no tiene voz: lean el texto."); return; }
-  synth.cancel(); queue=chunk(text); nowLabel=label||""; paused=false; next();
+function chunk(text){ const clean=text.replace(/<[^>]+>/g,""); const parts=clean.replace(/([\.\?\!:])\s+/g,"$1|").split(/\||\n+/).map(s=>s.trim()).filter(Boolean); const out=[];let buf=""; for(const p of parts){ if((buf+" "+p).length>200&&buf){out.push(buf);buf=p}else{buf=buf?buf+" "+p:p} } if(buf) out.push(buf); return out; }
+function hardCancel(){ gen++; if(synth) synth.cancel(); }
+/* say: reemplaza lo que suena */
+function say(text,label){ if(!synth){ toast("Este navegador no tiene voz."); return; } hardCancel(); resumeAfter=null; queue=chunk(text); nowLabel=label||""; paused=false; next(); }
+/* sayIfFree: solo si no está hablando (historias automáticas) */
+function sayIfFree(text,label){ if(speaking||paused) return false; say(text,label); return true; }
+/* sayUrgent: indicación de giro; interrumpe y luego retoma la historia */
+function sayUrgent(text){
+  if(!synth) return;
+  const saved = speaking&&!paused ? {q:[cur,...queue].filter(Boolean),label:nowLabel} : (resumeAfter||null);
+  hardCancel(); queue=[text]; nowLabel="Indicación"; resumeAfter=saved; paused=false; next();
 }
 function next(){
-  if(!queue.length){ speaking=false; cur=""; updatePlayer(); return; }
+  if(!queue.length && resumeAfter){ queue=resumeAfter.q; nowLabel=resumeAfter.label; resumeAfter=null; }
+  if(!queue.length){ speaking=false; cur=""; lastSpeechEnd=Date.now(); updatePlayer(); return; }
   speaking=true; cur=queue.shift();
-  const u=new SpeechSynthesisUtterance(cur);
-  if(voice){ u.voice=voice; u.lang=voice.lang; } else u.lang="es-MX";
+  const my=gen, u=new SpeechSynthesisUtterance(cur);
+  if(voice){u.voice=voice;u.lang=voice.lang;} else u.lang="es-MX";
   u.rate=rate; u.pitch=1;
-  u.onend=()=>{ if(!paused && speaking) next(); };
-  u.onerror=e=>{ if(e.error!=="interrupted"&&e.error!=="canceled"){ speaking=false; updatePlayer(); } };
+  u.onend=()=>{ if(my===gen && !paused) next(); };
+  u.onerror=e=>{ if(my===gen && e.error!=="interrupted" && e.error!=="canceled"){ speaking=false; updatePlayer(); } };
   synth.speak(u); updatePlayer();
 }
-function stopVoice(){ speaking=false; queue=[]; paused=false; if(synth) synth.cancel(); updatePlayer(); }
+function stopVoice(){ hardCancel(); speaking=false; queue=[]; resumeAfter=null; paused=false; lastSpeechEnd=Date.now(); updatePlayer(); }
 function togglePause(){
-  if(!speaking){ if(mode==="stop") say(STOPS[idx].narr,STOPS[idx].name); else legSay(); return; }
-  if(paused){ paused=false; synth.resume(); setTimeout(()=>{ if(!synth.speaking){ queue.unshift(cur); next(); } },250); }
-  else { paused=true; synth.pause(); }
+  if(!speaking){ if(mode==="stop") say(STOPS[idx].narr,STOPS[idx].name); else legSay(true); return; }
+  if(paused){ paused=false; hardCancel(); queue.unshift(cur); next(); }
+  else { paused=true; hardCancel(); }
   updatePlayer();
 }
 function updatePlayer(){
   const s=STOPS[idx]; const on=speaking&&!paused;
-  $("#pPause").textContent = on?"❚❚":"▶";
-  $("#npT").textContent = speaking ? (nowLabel||s.name) : (mode==="stop"?s.name:"Camino a "+s.name);
-  $("#npS").textContent = speaking ? (paused?"En pausa":"Narrando…") : "Toquen ▶ para escuchar";
-  $("#stop").classList.toggle("playing", on);
-  $("#plIcon").textContent = on?"❚❚":"▶";
-  $("#plTitle").textContent = on?"Narrando…":(paused?"Continuar":"Escuchar la historia");
+  $("#pPause").textContent=on?"❚❚":"▶";
+  $("#npT").textContent=speaking?(nowLabel||s.name):(mode==="stop"?s.name:"Camino a "+s.name);
+  $("#npS").textContent=speaking?(paused?"En pausa":"Narrando…"):"Toquen ▶ para escuchar";
+  $("#stop").classList.toggle("playing",on);
+  $("#plIcon").textContent=on?"❚❚":"▶";
+  $("#plTitle").textContent=on?"Narrando…":(paused?"Continuar":"Escuchar la historia");
 }
 $("#pPause").onclick=togglePause;
 $("#pStop").onclick=stopVoice;
-$("#pBack").onclick=()=>{ if(cur){ synth.cancel(); queue.unshift(cur); paused=false; setTimeout(next,80);} };
+$("#pBack").onclick=()=>{ if(cur){ hardCancel(); queue.unshift(cur); paused=false; next(); } };
 
-/* ======================= GEO ======================= */
+/* ======================= GEO BÁSICO ======================= */
 const R=6371000, rad=d=>d*Math.PI/180;
 function dist(a,b){const dLat=rad(b.lat-a.lat),dLng=rad(b.lng-a.lng);const x=Math.sin(dLat/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
 function bearing(a,b){const y=Math.sin(rad(b.lng-a.lng))*Math.cos(rad(b.lat));const x=Math.cos(rad(a.lat))*Math.sin(rad(b.lat))-Math.sin(rad(a.lat))*Math.cos(rad(b.lat))*Math.cos(rad(b.lng-a.lng));return (Math.atan2(y,x)*180/Math.PI+360)%360;}
 const CARD=["norte","noreste","este","sureste","sur","suroeste","oeste","noroeste"];
-function relDir(b){ if(heading==null) return "hacia el "+CARD[Math.round(b/45)%8]; const d=(b-heading+360)%360; if(d<30||d>330) return "al frente"; if(d<150) return "hacia su derecha"; if(d<=210) return "detrás de ustedes"; return "hacia su izquierda"; }
+function relDir(b){ if(heading==null) return "hacia el "+CARD[Math.round(b/45)%8]; const d=(b-heading+360)%360; if(d<30||d>330) return "al frente"; if(d<150) return "a su derecha"; if(d<=210) return "detrás"; return "a su izquierda"; }
+/* distancia punto-segmento aproximada (metros) */
+function distToLine(p,line){ if(!line||line.length<2) return Infinity; let best=Infinity; const kx=Math.cos(rad(p.lat))*111320, ky=110540;
+  for(let i=0;i<line.length-1;i++){ const a=line[i],b=line[i+1]; const ax=(a.lng-p.lng)*kx, ay=(a.lat-p.lat)*ky, bx=(b.lng-p.lng)*kx, by=(b.lat-p.lat)*ky; const dx=bx-ax, dy=by-ay; const L=dx*dx+dy*dy; let t=L?-(ax*dx+ay*dy)/L:0; t=Math.max(0,Math.min(1,t)); const x=ax+t*dx, y=ay+t*dy; best=Math.min(best,Math.hypot(x,y)); } return best; }
+
+/* ======================= MOVIMIENTO (¿están quietos?) ======================= */
+let track=[], stationary=false, walkedSinceSpeech=0, lastPosForWalk=null;
+function updateMotion(p){
+  const now=Date.now(); track.push({t:now,lat:p.lat,lng:p.lng}); track=track.filter(x=>now-x.t<75000);
+  const span = track.length? now-track[0].t : 0;
+  const maxD = Math.max(0,...track.map(x=>dist(x,p)));
+  const was=stationary;
+  stationary = span>45000 && maxD<18;
+  if(!stationary && lastPosForWalk){ const d=dist(lastPosForWalk,p); if(d>4&&d<80) walkedSinceSpeech+=d; }
+  lastPosForWalk=p;
+  if(was!==stationary){ if(stationary) feedAdd("⏸","Parece que se detuvieron. Pauso las historias automáticas hasta que vuelvan a caminar."); else feedAdd("▶","Siguen caminando. Retomo la guía."); }
+  const ms=$("#moveState"); ms.textContent = stationary?"⏸ Detenidos · historias en pausa":"🚶 Caminando"; ms.className="pill "+(stationary?"warn":"blue");
+}
+
+/* ======================= MAPA ======================= */
+let map=null, meMarker=null, accCircle=null, routeLine=null, ghostLine=null, stopMarkers=[], follow=true;
+function mkIcon(i){ const s=STOPS[i]; const cls = i===idx?"c":(visited[s.id]?"d":""); return L.divIcon({className:"",html:`<div class="mk ${cls}">${visited[s.id]&&i!==idx?"✓":i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]}); }
+function initMap(){
+  if(map||typeof L==="undefined"){ if(typeof L==="undefined") $("#map").innerHTML='<div style="padding:30px;color:#bfae98;text-align:center">No se pudo cargar el mapa. Usen Google Maps.</div>'; return; }
+  map=L.map("map",{zoomControl:false,attributionControl:true}).setView([STOPS[idx].lat,STOPS[idx].lng],16);
+  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:'© OpenStreetMap · © CARTO'}).addTo(map);
+  ghostLine=L.polyline(STOPS.map(s=>[s.lat,s.lng]),{color:"#8a6a3a",weight:3,opacity:.5,dashArray:"4 8"}).addTo(map);
+  STOPS.forEach((s,i)=>{ const m=L.marker([s.lat,s.lng],{icon:mkIcon(i)}).addTo(map); m.on("click",()=>{ if(i!==idx){ idx=i; mode="walk"; startLeg(); render(); } }); stopMarkers.push(m); });
+  map.on("dragstart",()=>{ follow=false; $("#bFollow").classList.remove("on"); });
+}
+function refreshMarkers(){ stopMarkers.forEach((m,i)=>m.setIcon(mkIcon(i))); }
+function drawMe(){
+  if(!map||!pos) return;
+  const ll=[pos.lat,pos.lng];
+  if(!meMarker){ meMarker=L.marker(ll,{icon:L.divIcon({className:"",html:'<div class="me"><div class="cone" id="cone"></div><div class="dot"></div></div>',iconSize:[22,22],iconAnchor:[11,11]}),zIndexOffset:1000}).addTo(map); accCircle=L.circle(ll,{radius:pos.acc,color:"#4aa3ff",weight:1,fillOpacity:.08}).addTo(map); }
+  meMarker.setLatLng(ll); accCircle.setLatLng(ll).setRadius(Math.min(pos.acc,150));
+  const c=document.getElementById("cone"); if(c){ if(heading!=null){ c.style.display="block"; c.style.transform=`rotate(${heading}deg)`; } else c.style.display="none"; }
+  if(follow) map.panTo(ll,{animate:true,duration:.6});
+}
+$("#bFollow").onclick=()=>{ follow=!follow; $("#bFollow").classList.toggle("on",follow); if(follow&&pos&&map) map.setView([pos.lat,pos.lng],17); };
+$("#bFit").onclick=()=>{ if(!map) return; follow=false; $("#bFollow").classList.remove("on"); const pts=[[STOPS[idx].lat,STOPS[idx].lng]]; if(pos) pts.push([pos.lat,pos.lng]); if(route&&route.line) route.line.forEach(p=>pts.push([p.lat,p.lng])); map.fitBounds(pts,{padding:[60,60],maxZoom:18}); };
+
+/* ======================= RUTA A PIE (OSRM) ======================= */
+let route=null, routing=false, lastRouteAt=0, offCount=0, leg=null;
+const MOD={"left":"a la izquierda","right":"a la derecha","slight left":"levemente a la izquierda","slight right":"levemente a la derecha","sharp left":"bien a la izquierda","sharp right":"bien a la derecha","straight":"recto","uturn":"media vuelta"};
+const ICON={"left":"↰","right":"↱","slight left":"↖","slight right":"↗","sharp left":"↰","sharp right":"↱","straight":"↑","uturn":"↶"};
+function stepText(st){
+  const n = st.name ? ` por ${st.name}` : "";
+  const t=st.type, m=st.modifier;
+  if(t==="arrive") return {tx:`Llegan a ${STOPS[idx].name}`, ic:"📍"};
+  if(t==="depart") return {tx:`Salgan${n||" hacia la parada"}`, ic:"↑"};
+  if(t==="roundabout"||t==="rotary") return {tx:`En la rotonda, tomen la salida${n}`, ic:"⟳"};
+  if(!m||m==="straight"||t==="new name"||t==="continue"&&m==="straight") return {tx:`Sigan recto${n}`, ic:"↑"};
+  if(m==="uturn") return {tx:`Den media vuelta${n}`, ic:"↶"};
+  return {tx:`Giren ${MOD[m]||m}${n}`, ic:ICON[m]||"↑"};
+}
+async function fetchRoute(from,to){
+  const url=`https://routing.openstreetmap.de/routed-foot/route/v1/driving/${from.lng},${from.lat};${to.lng},${to.lat}?overview=full&geometries=geojson&steps=true`;
+  const ctl=new AbortController(); const tm=setTimeout(()=>ctl.abort(),9000);
+  try{ const r=await fetch(url,{signal:ctl.signal}); clearTimeout(tm); if(!r.ok) throw 0; const j=await r.json(); const rt=j.routes&&j.routes[0]; if(!rt) throw 0;
+    const line=rt.geometry.coordinates.map(c=>({lat:c[1],lng:c[0]}));
+    const steps=[]; rt.legs[0].steps.forEach(s=>steps.push({type:s.maneuver.type,modifier:s.maneuver.modifier,name:s.name,loc:{lat:s.maneuver.location[1],lng:s.maneuver.location[0]},done:false}));
+    return {line,steps,distance:rt.distance};
+  }catch(e){ clearTimeout(tm); return null; }
+}
+async function computeRoute(reason){
+  const to=STOPS[idx]; const from = pos || (idx>0?STOPS[idx-1]:null); if(!from||routing) return;
+  routing=true; lastRouteAt=Date.now(); $("#turnTx").textContent = reason==="re"?"Recalculando…":"Calculando ruta…";
+  const r=await fetchRoute(from,to); routing=false;
+  if(r){ route=r; route.steps[0].done=true; } else { route={line:[from,{lat:to.lat,lng:to.lng}],steps:[],distance:dist(from,to),straight:true}; }
+  if(leg && !leg.total) leg.total=route.distance;
+  if(map){ if(routeLine) map.removeLayer(routeLine); routeLine=L.polyline(route.line.map(p=>[p.lat,p.lng]),{color:"#e3b25a",weight:6,opacity:.95,dashArray:route.straight?"2 10":null,lineCap:"round"}).addTo(map); }
+  if(reason!=="re" && map && !pos){ map.fitBounds(route.line.map(p=>[p.lat,p.lng]),{padding:[60,60]}); }
+  if(reason==="re") feedAdd("🔁","Ruta recalculada desde donde están.");
+  updateNav();
+}
+function maybeReroute(){
+  if(!route||!pos||routing||stationary||pos.acc>40||route.straight&&!pos) return;
+  const off=distToLine(pos,route.line);
+  offCount = off>45 ? offCount+1 : 0;
+  if(offCount>=3 && Date.now()-lastRouteAt>30000){ offCount=0; computeRoute("re"); }
+}
+function updateNav(){
+  const s=STOPS[idx];
+  if(!pos){ $("#wDist").textContent="—"; $("#wEta").textContent=""; }
+  else { const d=dist(pos,s); $("#wDist").textContent = d<1000?Math.round(d)+" m":(d/1000).toFixed(1)+" km"; $("#wEta").textContent=`~${Math.max(1,Math.round(d/70))} min`; }
+  if(!route){ return; }
+  if(route.straight){ $("#turnIc").textContent="➚"; $("#turnTx").textContent=`Hacia ${s.name}`; $("#turnSub").textContent=pos?`${relDir(bearing(pos,s))} · sin ruta detallada, sigan la línea`:"Sin ruta detallada"; return; }
+  const nx=route.steps.find(x=>!x.done);
+  if(!nx){ $("#turnIc").textContent="📍"; $("#turnTx").textContent=`Llegando a ${s.name}`; $("#turnSub").textContent=""; return; }
+  const st=stepText(nx); $("#turnIc").textContent=st.ic; $("#turnTx").textContent=st.tx;
+  $("#turnSub").textContent = pos ? `en ${Math.round(dist(pos,nx.loc)/5)*5} m` : "";
+}
+function checkSteps(){
+  if(!route||!pos||route.straight) return;
+  const i0=route.steps.findIndex(x=>!x.done); if(i0<0) return;
+  for(let i=i0;i<route.steps.length;i++){
+    const st=route.steps[i];
+    if(dist(pos,st.loc)<28){
+      for(let j=i0;j<=i;j++) route.steps[j].done=true;
+      const isTurn = st.type!=="arrive" && st.modifier && st.modifier!=="straight" && st.type!=="new name";
+      if(isTurn && autoVoice && !stationary) sayUrgent(stepText(st).tx+".");
+      updateNav(); break;
+    }
+  }
+}
+
+/* ======================= CALLE ACTUAL (Nominatim) ======================= */
+let lastGeoQ=null, lastGeoT=0, curStreet="", streetQ=false;
+async function lookupStreet(){
+  if(!pos||streetQ||pos.acc>60) return;
+  if(lastGeoQ && dist(lastGeoQ,pos)<25 && Date.now()-lastGeoT<60000) return;
+  if(Date.now()-lastGeoT<6000) return;
+  streetQ=true; lastGeoQ={...pos}; lastGeoT=Date.now();
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${pos.lat}&lon=${pos.lng}&zoom=18&addressdetails=1&accept-language=es`);
+    const j=await r.json(); const a=j.address||{};
+    const name=a.road||a.pedestrian||a.footway||a.square||a.path||a.place||a.neighbourhood||"";
+    if(name && name!==curStreet){ curStreet=name; $("#streetName").textContent=name; onStreet(name); }
+  }catch(e){ /* sin red: usar nombre de la ruta */ fallbackStreet(); }
+  streetQ=false;
+}
+function fallbackStreet(){
+  if(!route||route.straight) return; const done=route.steps.filter(x=>x.done); const last=done[done.length-1];
+  if(last&&last.name&&last.name!==curStreet){ curStreet=last.name; $("#streetName").textContent=last.name; onStreet(last.name); }
+}
+function onStreet(name){
+  const n=strip(name);
+  const st=STREETS.find(s=>s.k.some(k=>n.includes(strip(k))));
+  if(st && !told["st_"+st.id]){
+    if(stationary||mode!=="walk"||!autoVoice) return;
+    if(sayIfFree(st.t,"📍 "+name)){ markTold("st_"+st.id); feedAdd("🏛️",`<b>${name}</b>: historia de la calle`); updStoryCount(); walkedSinceSpeech=0; }
+    else pendingStreet=st;   // se cuenta apenas termine lo que suena
+  }
+}
+let pendingStreet=null;
+
+/* ======================= HISTORIA DEL TRAMO (por avance) ======================= */
+function startLeg(){
+  const s=STOPS[idx];
+  const parts=(s.legNarr||"").split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
+  leg={id:s.id,parts,next:0,total:null,startedAt:Date.now()};
+  route=null; offCount=0; announcedNear=false;
+  computeRoute("new");
+  refreshMarkers();
+}
+let announcedNear=false;
+function legProgress(){ if(!leg||!pos) return 0; const tot=leg.total||dist(STOPS[idx-1]||pos,STOPS[idx]); const rem=dist(pos,STOPS[idx]); return Math.max(0,Math.min(1,1-rem/Math.max(tot,1))); }
+function legSay(manual){
+  const s=STOPS[idx]; if(!leg) startLeg();
+  if(manual){ say(`${s.legDir.replace(/<[^>]+>/g,"")} ${s.legNarr}`,"Camino a "+s.name); if(leg) leg.next=leg.parts.length; return; }
+  // al iniciar el tramo: indicación + primera parte
+  const first = leg.parts[0]||"";
+  say(`Próxima parada: ${s.name}. ${s.legDir.replace(/<[^>]+>/g,"")} ${first}`, "Camino a "+s.name);
+  leg.next=1; markTold("leg_"+s.id+"_0");
+}
+function autoStories(){
+  if(mode!=="walk"||!autoVoice||stationary||speaking||paused) return;
+  if(pendingStreet && !told["st_"+pendingStreet.id]){ const st=pendingStreet; pendingStreet=null; if(sayIfFree(st.t,"📍 "+curStreet)){ markTold("st_"+st.id); feedAdd("🏛️",`<b>${curStreet}</b>: historia de la calle`); updStoryCount(); walkedSinceSpeech=0; return; } }
+  // siguientes partes de la historia del tramo según avance
+  if(leg && leg.next<leg.parts.length){
+    const need = leg.parts.length>1 ? 0.15 + 0.65*(leg.next/(leg.parts.length)) : 0;
+    if(legProgress()>=need || Date.now()-lastSpeechEnd>40000){
+      const k="leg_"+leg.id+"_"+leg.next;
+      if(!told[k]){ say(leg.parts[leg.next],"Camino a "+STOPS[idx].name); markTold(k); updStoryCount(); }
+      leg.next++; walkedSinceSpeech=0; return;
+    }
+  }
+  // dato al paso si llevan un rato caminando en silencio
+  if(walkedSinceSpeech>220 && Date.now()-lastSpeechEnd>60000){
+    const f=FILL.find(x=>!told["f_"+x.id]);
+    if(f){ say(f.t,"Dato al paso"); markTold("f_"+f.id); feedAdd("💬","Dato al paso"); updStoryCount(); walkedSinceSpeech=0; }
+  }
+}
+function updStoryCount(){ $("#storyState").textContent="Historias: "+Object.keys(told).filter(k=>k!=="day").length; }
+
+/* ======================= FEED ======================= */
+function feedAdd(ic,html){ const f=$("#feed"); const d=document.createElement("div"); d.className="fi"; d.innerHTML=`<span class="ic">${ic}</span><span>${html} <span style="opacity:.6">· ${hhmm(new Date())}</span></span>`; f.prepend(d); while(f.children.length>5) f.lastChild.remove(); }
+
+/* ======================= GPS + BRÚJULA ======================= */
 function startGeo(){
   if(!("geolocation" in navigator)){ geoFail("Sin GPS en este navegador"); return; }
   try{ navigator.geolocation.watchPosition(p=>{
-      pos={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy};
+      const np={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy};
+      const first=!pos; pos=np;
       if(!compassOn && p.coords.heading!=null && !isNaN(p.coords.heading) && p.coords.speed>0.6) heading=p.coords.heading;
-      setGps(); tick();
-    }, e=>geoFail(e.code===1?"Ubicación denegada":"Sin señal GPS"), {enableHighAccuracy:true,maximumAge:4000,timeout:20000});
+      setGps(); updateMotion(pos); drawMe();
+      if(first){ if(map) map.setView([pos.lat,pos.lng],17); if(mode==="walk") computeRoute("new"); }
+      tick();
+    }, e=>geoFail(e.code===1?"Ubicación denegada":"Sin señal GPS"), {enableHighAccuracy:true,maximumAge:3000,timeout:20000});
   }catch(e){ geoFail("GPS bloqueado aquí"); }
 }
-function geoFail(msg){ const g=$("#gps"); g.textContent="Manual"; g.className="pill warn"; $("#manualNote").innerHTML=`📍 ${msg}. Usen <b>Maps</b> para la ruta y toquen <b>Llegamos</b> al llegar.`; $("#wDistSub").textContent="Sin GPS: guíense con Maps"; }
-function setGps(){ const g=$("#gps"); g.textContent="GPS ±"+Math.round(pos.acc)+"m"; g.className="pill "+(pos.acc<40?"ok":"warn"); $("#manualNote").textContent = pos.acc>60?"El GPS pierde precisión entre estas calles. Si ya están ahí, toquen Llegamos.":""; }
-function onOrient(e){ let h=null; if(typeof e.webkitCompassHeading==="number") h=e.webkitCompassHeading; else if(e.absolute&&e.alpha!=null) h=(360-e.alpha)%360; if(h!=null){ heading=h; compassOn=true; drawArrow(); } }
+function geoFail(msg){ const g=$("#gps"); g.textContent="Manual"; g.className="pill warn"; $("#manualNote").innerHTML=`📍 ${msg}. Usen <b>Google Maps</b> y toquen <b>Llegamos</b> al llegar.`; $("#streetName").textContent="Sin GPS"; }
+function setGps(){ if($("#streetName").textContent==="Sin GPS") $("#streetName").textContent=curStreet||"Buscando calle…"; const g=$("#gps"); g.textContent="GPS ±"+Math.round(pos.acc)+"m"; g.className="pill "+(pos.acc<40?"ok":"warn"); $("#manualNote").textContent=pos.acc>60?"El GPS pierde precisión entre estas calles. Si ya están ahí, toquen Llegamos.":""; }
+function onOrient(e){ let h=null; if(typeof e.webkitCompassHeading==="number") h=e.webkitCompassHeading; else if(e.absolute&&e.alpha!=null) h=(360-e.alpha)%360; if(h!=null){ heading=h; compassOn=true; const c=document.getElementById("cone"); if(c){ c.style.display="block"; c.style.transform=`rotate(${h}deg)`; } } }
 async function startCompass(){ try{ if(window.DeviceOrientationEvent&&typeof DeviceOrientationEvent.requestPermission==="function"){ const r=await DeviceOrientationEvent.requestPermission(); if(r!=="granted") return; } window.addEventListener("deviceorientationabsolute",onOrient,true); window.addEventListener("deviceorientation",onOrient,true); }catch(e){} }
 async function keepAwake(){ try{ if("wakeLock" in navigator) await navigator.wakeLock.request("screen"); }catch(e){} }
 document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") keepAwake(); });
 
 /* ======================= UI ======================= */
-const hhmm=d=>d.toTimeString().slice(0,5);
+function hhmm(d){return d.toTimeString().slice(0,5);}
 function minsUntil(t){const [h,m]=t.split(":").map(Number);const c=new Date();c.setHours(h,m,0,0);return Math.round((c-new Date())/60000);}
-function hoursBadge(s){
-  if(!s.closes) return `<span class="pill">Exterior · libre</span>`;
-  if(s.closes==="closed") return `<span class="pill bad">Hoy cerrado · por fuera</span>`;
-  const lim=s.lastEntry||s.closes, m=minsUntil(lim);
-  if(m<0) return `<span class="pill bad">Ya cerró · por fuera</span>`;
-  if(m<40) return `<span class="pill warn">⚠️ ${s.lastEntry?"Acceso":"Cierra"} ${lim} · ${m} min</span>`;
-  return `<span class="pill ok">Abierto hasta ${s.closes}</span>`;
-}
+function hoursBadge(s){ if(!s.closes) return `<span class="pill">Exterior · libre</span>`; if(s.closes==="closed") return `<span class="pill bad">Hoy cerrado · por fuera</span>`; const lim=s.lastEntry||s.closes,m=minsUntil(lim); if(m<0) return `<span class="pill bad">Ya cerró · por fuera</span>`; if(m<40) return `<span class="pill warn">⚠️ ${s.lastEntry?"Acceso":"Cierra"} ${lim} · ${m} min</span>`; return `<span class="pill ok">Abierto hasta ${s.closes}</span>`; }
 const mapsUrl=s=>`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=walking`;
 function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),3000);}
-function save(){store.set("toledo_state",{idx,mode,visited,day:new Date().toDateString()});}
-function setBg(el,url){ el.style.backgroundImage=`url("${url}")`; el.style.animation="none"; void el.offsetWidth; el.style.animation=""; }
+function save(){store.set("toledo_state",{idx,mode,visited,day:today});}
+function setBg(el,url){ el.style.backgroundImage=`url("${url}")`; }
 
 function render(){
   const s=STOPS[idx];
-  $("#walk").classList.toggle("hidden", view!=="guide"||mode!=="walk");
-  $("#stop").classList.toggle("hidden", view!=="guide"||mode!=="stop");
-  $("#list").classList.toggle("hidden", view!=="list");
-  $("#prog").innerHTML = STOPS.map((x,i)=>`<i class="${visited[x.id]?"d":""} ${i===idx?"c":""}"></i>`).join("");
+  $("#walk").classList.toggle("hidden",view!=="guide"||mode!=="walk");
+  $("#stop").classList.toggle("hidden",view!=="guide"||mode!=="stop");
+  $("#list").classList.toggle("hidden",view!=="list");
+  $("#prog").innerHTML=STOPS.map((x,i)=>`<i class="${visited[x.id]?"d":""} ${i===idx?"c":""}"></i>`).join("");
   if(mode==="walk"){
-    setBg($("#wBg"),IMG[s.id]);
+    setBg($("#wThumb"),IMG[s.id]);
     $("#wKick").textContent=`Próxima · ${idx+1} de ${STOPS.length}`;
     $("#wName").textContent=s.name;
-    $("#wBadges").innerHTML=hoursBadge(s)+`<span class="pill">~${s.visit} min</span>`;
-    $("#wDir").innerHTML = s.legDir ? s.legDir : "Diríjanse al punto de partida: sigan la flecha o abran Maps.";
+    $("#wBadges").innerHTML=hoursBadge(s)+`<span class="pill">~${s.visit} min de visita</span>`;
+    $("#wDir").innerHTML=s.legDir?s.legDir:"Diríjanse al punto de partida siguiendo la línea dorada del mapa.";
     $("#bMaps").href=mapsUrl(s);
-    $("#bLeg").style.visibility = s.legNarr?"visible":"hidden";
+    if(map){ setTimeout(()=>map.invalidateSize(),60); }
   } else {
     setBg($("#sBg"),IMG[s.id]);
     $("#sKick").textContent=`Parada ${idx+1} de ${STOPS.length} · ${SHORT[s.id]||""}`;
-    $("#sName").textContent=s.name;
-    $("#sBadges").innerHTML=hoursBadge(s);
+    $("#sName").textContent=s.name; $("#sBadges").innerHTML=hoursBadge(s);
     $("#sNarr").textContent=s.narr; $("#sNarr").classList.add("clamp"); $("#bMore").textContent="Leer todo ▾";
     $("#plSub").textContent=`Narración · ~${Math.max(1,Math.round(s.narr.split(/\s+/).length/150))} min`;
     $("#sRetoTxt").textContent=s.reto; $("#sAns").textContent=s.ans; $("#sAns").classList.add("hidden"); $("#bAns").classList.remove("hidden");
     $("#sTipTxt").textContent=s.tip;
-    $("#bNext").textContent = idx<STOPS.length-1 ? `Siguiente: ${STOPS[idx+1].name} →` : "🏁 Terminar el recorrido";
+    $("#bNext").textContent=idx<STOPS.length-1?`Siguiente: ${STOPS[idx+1].name} →`:"🏁 Terminar el recorrido";
   }
-  renderList(); updatePlayer(); tick(); save();
+  renderList(); refreshMarkers(); updatePlayer(); updateNav(); save();
 }
 function renderList(){
-  $("#list").innerHTML = STOPS.map((s,i)=>`<button class="it ${visited[s.id]?"done":""} ${i===idx?"cur":""}" data-i="${i}" style="width:100%;text-align:left">
+  $("#list").innerHTML=STOPS.map((s,i)=>`<button class="it ${visited[s.id]?"done":""} ${i===idx?"cur":""}" data-i="${i}" style="width:100%;text-align:left">
     <div class="th" style="background-image:url('${IMG[s.id]}')"><span class="n">${visited[s.id]?"✓":i+1}</span></div>
     <div class="nm"><b>${s.name}</b><span>${s.closes==="closed"?"Hoy cerrado · exterior":s.closes?"Cierra "+s.closes:"Exterior"} · ~${s.visit} min</span></div><span style="color:var(--mute)">›</span></button>`).join("");
-  document.querySelectorAll("#list .it").forEach(el=>el.onclick=()=>{ idx=+el.dataset.i; mode="walk"; announced={}; lastSpokenDist=null; view="guide"; render(); window.scrollTo({top:0}); });
+  document.querySelectorAll("#list .it").forEach(el=>el.onclick=()=>{ idx=+el.dataset.i; mode="walk"; view="guide"; startLeg(); render(); window.scrollTo({top:0}); });
 }
-function drawArrow(){ const s=STOPS[idx]; if(!pos||!s) return; const b=bearing(pos,s); $("#arrow").style.transform=`rotate(${heading==null?b:b-heading}deg)`; $("#northMark").textContent = heading==null?"N":"•"; }
 function tick(){
   $("#clock").textContent=hhmm(new Date());
-  const s=STOPS[idx]; if(!s||!pos) return;
-  const d=dist(pos,s), b=bearing(pos,s); drawArrow();
+  if(!pos) return;
+  updateNav();
   if(mode!=="walk") return;
-  $("#wDist").innerHTML = d<1000 ? `${Math.round(d)}<small>m</small>` : `${(d/1000).toFixed(1)}<small>km</small>`;
-  $("#wDistSub").textContent = `${relDir(b)} · ~${Math.max(1,Math.round(d/70))} min a pie`;
-  if(d < s.r + Math.min(25,(pos.acc||0)/2)){ arrive(true); return; }
-  if(d<90 && !announced.near){ announced.near=true; if(autoVoice&&!speaking) say(`Ya casi llegan a ${s.name}. Faltan unos ${Math.round(d/10)*10} metros, ${relDir(b)}.`,"Aviso"); }
-  for(const th of [400,250,150]){ if(d<th&&d>90&&!announced["d"+th]&&lastSpokenDist&&lastSpokenDist>=th){ announced["d"+th]=true; if(autoVoice&&!speaking) say(`Vamos bien. Quedan unos ${th} metros hasta ${s.name}, ${relDir(b)}.`,"Aviso"); } }
-  lastSpokenDist=d;
+  const s=STOPS[idx], d=dist(pos,s);
+  // llegada (una sola vez por parada)
+  if(d < s.r + Math.min(25,(pos.acc||0)/2) && !visited[s.id]){ arrive(true); return; }
+  if(d<90 && !announcedNear && !told["near_"+s.id] && autoVoice && !stationary){ announcedNear=true; markTold("near_"+s.id); sayUrgent(`Ya casi llegan a ${s.name}. Unos ${Math.round(d/10)*10} metros.`); }
+  checkSteps(); maybeReroute(); lookupStreet(); autoStories();
 }
-setInterval(()=>{ $("#clock").textContent=hhmm(new Date()); if(mode==="walk"&&!$("#app").classList.contains("hidden")) $("#wBadges").innerHTML=hoursBadge(STOPS[idx])+`<span class="pill">~${STOPS[idx].visit} min</span>`; },30000);
+setInterval(()=>{ $("#clock").textContent=hhmm(new Date()); if(!$("#app").classList.contains("hidden")){ if(pos&&mode==="walk"){ updateMotion(pos); autoStories(); } } },5000);
 
 function arrive(auto){
   if(mode==="stop") return;
   mode="stop"; view="guide"; visited[STOPS[idx].id]=true; render();
   if(auto) toast("📍 ¡Llegaron a "+STOPS[idx].name+"!");
   try{ navigator.vibrate&&navigator.vibrate([120,60,120]); }catch(e){}
-  if(autoVoice||!auto) say(STOPS[idx].narr, STOPS[idx].name);
+  if(!told["stop_"+STOPS[idx].id] || !auto){ markTold("stop_"+STOPS[idx].id); if(autoVoice||!auto) say(STOPS[idx].narr,STOPS[idx].name); }
   window.scrollTo({top:0,behavior:"smooth"});
 }
-function legSay(){ const s=STOPS[idx]; say(`Próxima parada: ${s.name}. ${s.legDir.replace(/<[^>]+>/g,"")} ${s.legNarr}`, "Camino a "+s.name); }
 function goNext(){
   if(idx>=STOPS.length-1){ say("Fin del recorrido. Gracias por caminar Toledo. Que disfruten el atardecer.","Fin"); toast("🏁 ¡Recorrido completo!"); return; }
-  idx++; mode="walk"; announced={}; lastSpokenDist=null; render();
-  if(autoVoice) legSay(); else stopVoice();
+  idx++; mode="walk"; startLeg(); render();
+  if(autoVoice) legSay(false); else stopVoice();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 $("#bArrive").onclick=()=>arrive(false);
-$("#bSkip").onclick=()=>{ stopVoice(); goNext(); };
+$("#bSkip").onclick=()=>{ stopVoice(); visited[STOPS[idx].id]=visited[STOPS[idx].id]||false; goNext(); };
 $("#bNext").onclick=goNext;
-$("#bLeg").onclick=legSay;
+$("#bLeg").onclick=()=>legSay(true);
 $("#bPlay").onclick=()=>{ if(speaking) togglePause(); else say(STOPS[idx].narr,STOPS[idx].name); };
 $("#bMore").onclick=()=>{ const n=$("#sNarr"); n.classList.toggle("clamp"); $("#bMore").textContent=n.classList.contains("clamp")?"Leer todo ▾":"Mostrar menos ▴"; };
 $("#bAns").onclick=()=>{ $("#sAns").classList.remove("hidden"); $("#bAns").classList.add("hidden"); };
-$("#bList").onclick=()=>{ view = view==="list"?"guide":"list"; render(); window.scrollTo({top:0}); };
+$("#bList").onclick=()=>{ view=view==="list"?"guide":"list"; render(); window.scrollTo({top:0}); };
 $("#home").onclick=()=>{ view="guide"; render(); };
 
 /* ajustes */
@@ -765,17 +1018,32 @@ $("#autoSw").onclick=()=>{ autoVoice=!autoVoice; prefs.auto=autoVoice; store.set
 $("#bTest").onclick=()=>say("Bienvenidos a Toledo, la ciudad de las tres culturas. Así va a sonar su guía durante el paseo.","Prueba de voz");
 
 /* inicio */
-$("#startAt").innerHTML = STOPS.map((s,i)=>`<option value="${i}">${i+1}. ${s.name}</option>`).join("");
+$("#startAt").innerHTML=STOPS.map((s,i)=>`<option value="${i}">${i+1}. ${s.name}</option>`).join("");
 const prev=store.get("toledo_state");
-if(prev&&prev.day===new Date().toDateString()&&prev.idx>0){ $("#startAt").value=prev.idx; visited=prev.visited||{}; $("#resumeNote").textContent=`↺ Retoman en: ${STOPS[prev.idx].name}`; }
+if(prev&&prev.day===today&&prev.idx>0){ const ni = prev.mode==="stop" && prev.idx<STOPS.length-1 ? prev.idx+1 : prev.idx; $("#startAt").value=ni; visited=prev.visited||{}; $("#resumeNote").textContent=`↺ Retoman en: ${STOPS[ni].name}`; }
 $("#go").onclick=()=>{
   idx=+$("#startAt").value; mode="walk"; view="guide";
   $("#landing").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#player").classList.remove("hidden");
   window.scrollTo({top:0});
-  const s=STOPS[idx]; const leg = idx>0&&s.legNarr ? ` ${s.legDir.replace(/<[^>]+>/g,"")} ${s.legNarr}` : "";
-  say(`${INTRO} Primera parada: ${s.name}.${leg}`,"Bienvenida");
-  startCompass(); keepAwake(); startGeo(); render();
+  initMap(); startLeg();
+  const s=STOPS[idx];
+  if(!told["intro"]){ markTold("intro"); say(`${INTRO} Primera parada: ${s.name}. ${s.legDir.replace(/<[^>]+>/g,"")} ${(leg.parts[0]||"")}`,"Bienvenida"); leg.next=Math.min(1,leg.parts.length); }
+  else legSay(false);
+  startCompass(); keepAwake(); startGeo(); render(); updStoryCount();
 };
+
+/* ======================= LANDING ======================= */
+(function landing(){
+  const box=$("#slides"), dots=$("#dots");
+  SLIDES.forEach((s,i)=>{ const d=document.createElement("div"); d.className="slide"+(i%2?" alt":""); d.style.backgroundImage=`url("${s[0]}")`; box.appendChild(d); dots.appendChild(document.createElement("b")); const im=new Image(); im.src=s[0]; });
+  let k=0; const els=box.children, ds=dots.children;
+  function show(n){ [...els].forEach((e,i)=>{ if(i===n){ e.classList.remove("on"); void e.offsetWidth; e.classList.add("on"); } else e.classList.remove("on"); }); [...ds].forEach((e,i)=>e.classList.toggle("on",i===n)); const c=$("#cap"); c.style.opacity=0; setTimeout(()=>{c.textContent=SLIDES[n][1]; c.style.opacity=1;},400); }
+  show(0); landing.t=setInterval(()=>{ if($("#landing").classList.contains("hidden")) return; k=(k+1)%SLIDES.length; show(k); },5200);
+  $("#route").innerHTML = STOPS.map((s,i)=>`<div class="rc"><div class="ph" style="background-image:url('${IMG[s.id]}')"><span class="n">${i+1}</span></div><div class="tx"><b>${s.name}</b><span>${SHORT[s.id]||""}</span></div></div>`).join("");
+  $("#credits").textContent = "Fotos: Wikimedia Commons (licencias CC BY / CC BY-SA), autores: Rafesmar, Weldon Kennedy, Ввласенко, Fernando, Querubin Saldaña, Bernard Gagnon, J. L. Filpo Cabana y otros. Algunas fotos de las paradas son vistas generales de la ciudad.";
+})();
+
+
 </script>
 </body>
 </html>
