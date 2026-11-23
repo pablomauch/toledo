@@ -40,7 +40,7 @@ function sayUrgent(text){
 }
 function next(){
   if(!queue.length && resumeAfter){ queue=resumeAfter.q; nowLabel=resumeAfter.label; resumeAfter=null; }
-  if(!queue.length){ speaking=false; cur=""; lastSpeechEnd=Date.now(); updatePlayer(); return; }
+  if(!queue.length){ speaking=false; cur=""; lastSpeechEnd=Date.now(); updatePlayer(); setTimeout(onSpeechEnd,1400); return; }
   speaking=true; cur=queue.shift();
   const my=gen, u=new SpeechSynthesisUtterance(cur);
   if(voice){u.voice=voice;u.lang=voice.lang;} else u.lang="es-MX";
@@ -49,7 +49,7 @@ function next(){
   u.onerror=e=>{ if(my===gen && e.error!=="interrupted" && e.error!=="canceled"){ speaking=false; updatePlayer(); } };
   synth.speak(u); updatePlayer();
 }
-function stopVoice(){ hardCancel(); speaking=false; queue=[]; resumeAfter=null; paused=false; lastSpeechEnd=Date.now(); updatePlayer(); }
+function stopVoice(){ chainOn=false; hardCancel(); speaking=false; queue=[]; resumeAfter=null; paused=false; lastSpeechEnd=Date.now(); updatePlayer(); }
 function togglePause(){
   if(!speaking){ if(mode==="stop") say(STOPS[idx].narr,STOPS[idx].name); else legSay(true); return; }
   if(paused){ paused=false; hardCancel(); queue.unshift(cur); next(); }
@@ -87,19 +87,25 @@ function updateMotion(p){
   const maxD = Math.max(0,...track.map(x=>dist(x,p)));
   const was=stationary;
   stationary = span>45000 && maxD<18;
-  if(!stationary && lastPosForWalk){ const d=dist(lastPosForWalk,p); if(d>4&&d<80) walkedSinceSpeech+=d; }
+  if(!stationary && lastPosForWalk){ const d=dist(lastPosForWalk,p); if(d>4&&d<80){ walkedSinceSpeech+=d; walkedSinceInstr+=d; } }
   lastPosForWalk=p;
   if(was!==stationary){ if(stationary) feedAdd("⏸","Parece que se detuvieron. Pauso las historias automáticas hasta que vuelvan a caminar."); else feedAdd("▶","Siguen caminando. Retomo la guía."); }
   const ms=$("#moveState"); ms.textContent = stationary?"⏸ Detenidos · historias en pausa":"🚶 Caminando"; ms.className="pill "+(stationary?"warn":"blue");
 }
 
 /* ======================= MAPA ======================= */
+const LAYERS={}; let curLayer="det"; const poiMarkers={};
+function poiIcon(p){ return L.divIcon({className:"",html:`<div class="poi ${told["poi_"+p.id]?"d":""}">★</div>`,iconSize:[22,22],iconAnchor:[11,11]}); }
 let map=null, meMarker=null, accCircle=null, routeLine=null, ghostLine=null, stopMarkers=[], follow=true;
 function mkIcon(i){ const s=STOPS[i]; const cls = i===idx?"c":(visited[s.id]?"d":""); return L.divIcon({className:"",html:`<div class="mk ${cls}">${visited[s.id]&&i!==idx?"✓":i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]}); }
 function initMap(){
   if(map||typeof L==="undefined"){ if(typeof L==="undefined") $("#map").innerHTML='<div style="padding:30px;color:#bfae98;text-align:center">No se pudo cargar el mapa. Usen Google Maps.</div>'; return; }
   map=L.map("map",{zoomControl:false,attributionControl:true}).setView([STOPS[idx].lat,STOPS[idx].lng],16);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:'© OpenStreetMap · © CARTO'}).addTo(map);
+  LAYERS.det=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'© OpenStreetMap'});
+  LAYERS.sat=L.layerGroup([L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:'Esri · Maxar'}),L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:'© CARTO'})]);
+  LAYERS.det.addTo(map);
+  POIS.forEach(p=>{ const mk=L.marker([p.lat,p.lng],{icon:poiIcon(p)}).addTo(map); mk.bindPopup(`<b>${p.n}</b><br>${p.t.charAt(0).toUpperCase()+p.t.slice(1)}<br><button data-poi="${p.id}">🎧 Escuchar</button>`); poiMarkers[p.id]=mk; });
+  map.on("popupopen",e=>{ const b=e.popup.getElement().querySelector("button[data-poi]"); if(b) b.onclick=()=>{ const p=POIS.find(x=>x.id===b.dataset.poi); say(p.n+". "+p.t.charAt(0).toUpperCase()+p.t.slice(1),p.n); }; });
   ghostLine=L.polyline(STOPS.map(s=>[s.lat,s.lng]),{color:"#8a6a3a",weight:3,opacity:.5,dashArray:"4 8"}).addTo(map);
   STOPS.forEach((s,i)=>{ const m=L.marker([s.lat,s.lng],{icon:mkIcon(i)}).addTo(map); m.on("click",()=>{ if(i!==idx){ idx=i; mode="walk"; startLeg(); render(); } }); stopMarkers.push(m); });
   map.on("dragstart",()=>{ follow=false; $("#bFollow").classList.remove("on"); });
@@ -113,6 +119,7 @@ function drawMe(){
   const c=document.getElementById("cone"); if(c){ if(heading!=null){ c.style.display="block"; c.style.transform=`rotate(${heading}deg)`; } else c.style.display="none"; }
   if(follow) map.panTo(ll,{animate:true,duration:.6});
 }
+$("#bLayer").onclick=()=>{ if(!map) return; map.removeLayer(LAYERS[curLayer]); curLayer=curLayer==="det"?"sat":"det"; LAYERS[curLayer].addTo(map); $("#bLayer").textContent=curLayer==="det"?"🛰️":"🗺️"; toast(curLayer==="det"?"Mapa detallado":"Vista satélite"); };
 $("#bFollow").onclick=()=>{ follow=!follow; $("#bFollow").classList.toggle("on",follow); if(follow&&pos&&map) map.setView([pos.lat,pos.lng],17); };
 $("#bFit").onclick=()=>{ if(!map) return; follow=false; $("#bFollow").classList.remove("on"); const pts=[[STOPS[idx].lat,STOPS[idx].lng]]; if(pos) pts.push([pos.lat,pos.lng]); if(route&&route.line) route.line.forEach(p=>pts.push([p.lat,p.lng])); map.fitBounds(pts,{padding:[60,60],maxZoom:18}); };
 
@@ -167,17 +174,42 @@ function updateNav(){
   const st=stepText(nx); $("#turnIc").textContent=st.ic; $("#turnTx").textContent=st.tx;
   $("#turnSub").textContent = pos ? `en ${Math.round(dist(pos,nx.loc)/5)*5} m` : "";
 }
+const lc=s=>s.charAt(0).toLowerCase()+s.slice(1);
+let walkedSinceInstr=0;
+function isTurn(st){ return st.type!=="arrive" && st.type!=="depart" && st.modifier && st.modifier!=="straight" && st.type!=="new name"; }
 function checkSteps(){
   if(!route||!pos||route.straight) return;
   const i0=route.steps.findIndex(x=>!x.done); if(i0<0) return;
   for(let i=i0;i<route.steps.length;i++){
-    const st=route.steps[i];
-    if(dist(pos,st.loc)<28){
+    const st=route.steps[i], d=dist(pos,st.loc);
+    if(d<26){
       for(let j=i0;j<=i;j++) route.steps[j].done=true;
-      const isTurn = st.type!=="arrive" && st.modifier && st.modifier!=="straight" && st.type!=="new name";
-      if(isTurn && autoVoice && !stationary) sayUrgent(stepText(st).tx+".");
-      updateNav(); break;
+      if(isTurn(st) && autoVoice && !stationary){ sayUrgent(`Acá, ${lc(stepText(st).tx)}.`); walkedSinceInstr=0; }
+      updateNav(); return;
     }
+  }
+  const st=route.steps[i0], d=dist(pos,st.loc);
+  if(isTurn(st) && !st.pre && d<75 && d>35 && autoVoice && !stationary){ st.pre=true; sayUrgent(`En unos ${Math.round(d/10)*10} metros, ${lc(stepText(st).tx)}.`); walkedSinceInstr=0; }
+}
+const OKS=["Van bien, sigan por esta calle.","Perfecto, sigan así.","Bien encaminados. Sigan derecho.","Todo en orden, sigan por aquí."];
+function reassure(){
+  if(!route||route.straight||!pos||stationary||speaking||paused||!autoVoice) return;
+  if(walkedSinceInstr<170) return;
+  if(distToLine(pos,route.line)>25) return;
+  const nx=route.steps.find(x=>!x.done); let extra="";
+  if(nx && isTurn(nx)){ const d=Math.round(dist(pos,nx.loc)/10)*10; if(d>80) extra=` En unos ${d} metros tendrán que ${lc(stepText(nx).tx).replace("giren","girar")}.`; }
+  const st=curStreet?` por ${curStreet}`:"";
+  say(OKS[Math.floor(Math.random()*OKS.length)].replace("por esta calle",st||"por esta calle")+extra,"Indicación");
+  walkedSinceInstr=0;
+}
+function checkPois(){
+  if(!pos||pos.acc>50||stationary||!autoVoice) return;
+  for(const p of POIS){
+    if(told["poi_"+p.id]) continue;
+    const d=dist(pos,p); if(d>p.r) continue;
+    markTold("poi_"+p.id); if(poiMarkers[p.id]) poiMarkers[p.id].setIcon(poiIcon(p));
+    const rd=d<12?"aquí mismo":relDir(bearing(pos,p));
+    sayUrgent(`Miren, ${rd}: ${p.t}`); feedAdd("★",`<b>${p.n}</b>`); updStoryCount(); walkedSinceSpeech=0; return;
   }
 }
 
@@ -250,6 +282,36 @@ function autoStories(){
 }
 function updStoryCount(){ $("#storyState").textContent="Historias: "+Object.keys(told).filter(k=>k!=="day").length; }
 
+/* ======================= CAPÍTULOS Y TRIVIA ======================= */
+let chainOn=false;
+let quizState=store.get("toledo_quiz")||{score:0,ans:{}};
+function renderChapters(){
+  const s=STOPS[idx], ch=CHAPTERS[s.id]||[];
+  $("#chapBox").classList.toggle("hidden",!ch.length);
+  $("#chapList").innerHTML=ch.map((c,i)=>`<button class="chap ${told["ch_"+s.id+"_"+i]?"done":""}" data-i="${i}"><span class="pl">${told["ch_"+s.id+"_"+i]?"✓":"▶"}</span><span><b>${c.t}</b><span class="s">~${Math.max(1,Math.round(c.x.split(/\s+/).length/150))} min · capítulo ${i+1}</span></span></button>`).join("");
+  document.querySelectorAll("#chapList .chap").forEach(b=>b.onclick=()=>playChapter(+b.dataset.i));
+}
+function playChapter(i){ const s=STOPS[idx], c=CHAPTERS[s.id][i]; chainOn=true; markTold("ch_"+s.id+"_"+i); say(`${c.t}. ${c.x}`,"📚 "+c.t); renderChapters(); updStoryCount(); }
+function renderQuiz(){
+  const s=STOPS[idx], q=QUIZ[s.id]; $("#quizBox").classList.toggle("hidden",!q); if(!q) return;
+  $("#quizPts").textContent=`${quizState.score} punto${quizState.score===1?"":"s"}`;
+  $("#quizQ").textContent=q.q; const an=quizState.ans[s.id];
+  $("#quizO").innerHTML=q.o.map((o,i)=>`<button class="qo ${an!=null?(i===q.a?"ok":(i===an?"no":"")):""}" data-i="${i}">${["A","B","C"][i]}. ${o}</button>`).join("");
+  $("#quizR").classList.toggle("hidden",an==null); if(an!=null) $("#quizR").textContent= an===q.a?"¡Correcto! +1 punto.":`Era: ${q.o[q.a]}.`;
+  document.querySelectorAll("#quizO .qo").forEach(b=>b.onclick=()=>{ if(quizState.ans[s.id]!=null) return; const i=+b.dataset.i; quizState.ans[s.id]=i; if(i===q.a) quizState.score++; store.set("toledo_quiz",quizState); renderQuiz(); $("#score").textContent="⭐ "+quizState.score; say(i===q.a?"¡Correcto! Un punto para ustedes.":`Casi. La respuesta era: ${q.o[q.a]}.`,"Trivia"); });
+  $("#score").textContent="⭐ "+quizState.score;
+}
+function onSpeechEnd(){
+  if(speaking||paused||!chainOn||!autoVoice||mode!=="stop"||view!=="guide") return;
+  const s=STOPS[idx], ch=CHAPTERS[s.id]||[];
+  const i=ch.findIndex((c,k)=>!told["ch_"+s.id+"_"+k]);
+  if(i>=0){ const c=ch[i]; markTold("ch_"+s.id+"_"+i); say(`Les cuento algo más. ${c.t}. ${c.x}`,"📚 "+c.t); renderChapters(); updStoryCount(); return; }
+  chainOn=false;
+  const q=QUIZ[s.id];
+  if(q && quizState.ans[s.id]==null){ say(`Y ahora, la trivia de esta parada. ${q.q} ¿${q.o.join(", ").replace(/, ([^,]*)$/," o $1")}? Respondan en la pantalla.`,"🧠 Trivia"); }
+  else say("Cuando quieran, toquen Siguiente parada y seguimos caminando.","Guía");
+}
+
 /* ======================= FEED ======================= */
 function feedAdd(ic,html){ const f=$("#feed"); const d=document.createElement("div"); d.className="fi"; d.innerHTML=`<span class="ic">${ic}</span><span>${html} <span style="opacity:.6">· ${hhmm(new Date())}</span></span>`; f.prepend(d); while(f.children.length>5) f.lastChild.remove(); }
 
@@ -304,6 +366,7 @@ function render(){
     $("#plSub").textContent=`Narración · ~${Math.max(1,Math.round(s.narr.split(/\s+/).length/150))} min`;
     $("#sRetoTxt").textContent=s.reto; $("#sAns").textContent=s.ans; $("#sAns").classList.add("hidden"); $("#bAns").classList.remove("hidden");
     $("#sTipTxt").textContent=s.tip;
+    renderChapters(); renderQuiz();
     $("#bNext").textContent=idx<STOPS.length-1?`Siguiente: ${STOPS[idx+1].name} →`:"🏁 Terminar el recorrido";
   }
   renderList(); refreshMarkers(); updatePlayer(); updateNav(); save();
@@ -323,7 +386,7 @@ function tick(){
   // llegada (una sola vez por parada)
   if(d < s.r + Math.min(25,(pos.acc||0)/2) && !visited[s.id]){ arrive(true); return; }
   if(d<90 && !announcedNear && !told["near_"+s.id] && autoVoice && !stationary){ announcedNear=true; markTold("near_"+s.id); sayUrgent(`Ya casi llegan a ${s.name}. Unos ${Math.round(d/10)*10} metros.`); }
-  checkSteps(); maybeReroute(); lookupStreet(); autoStories();
+  checkSteps(); checkPois(); maybeReroute(); lookupStreet(); autoStories(); reassure();
 }
 setInterval(()=>{ $("#clock").textContent=hhmm(new Date()); if(!$("#app").classList.contains("hidden")){ if(pos&&mode==="walk"){ updateMotion(pos); autoStories(); } } },5000);
 
@@ -332,7 +395,7 @@ function arrive(auto){
   mode="stop"; view="guide"; visited[STOPS[idx].id]=true; render();
   if(auto) toast("📍 ¡Llegaron a "+STOPS[idx].name+"!");
   try{ navigator.vibrate&&navigator.vibrate([120,60,120]); }catch(e){}
-  if(!told["stop_"+STOPS[idx].id] || !auto){ markTold("stop_"+STOPS[idx].id); if(autoVoice||!auto) say(STOPS[idx].narr,STOPS[idx].name); }
+  if(!told["stop_"+STOPS[idx].id] || !auto){ markTold("stop_"+STOPS[idx].id); if(autoVoice||!auto){ chainOn=true; say(STOPS[idx].narr,STOPS[idx].name); } }
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function goNext(){
@@ -345,7 +408,7 @@ $("#bArrive").onclick=()=>arrive(false);
 $("#bSkip").onclick=()=>{ stopVoice(); visited[STOPS[idx].id]=visited[STOPS[idx].id]||false; goNext(); };
 $("#bNext").onclick=goNext;
 $("#bLeg").onclick=()=>legSay(true);
-$("#bPlay").onclick=()=>{ if(speaking) togglePause(); else say(STOPS[idx].narr,STOPS[idx].name); };
+$("#bPlay").onclick=()=>{ if(speaking) togglePause(); else { chainOn=true; say(STOPS[idx].narr,STOPS[idx].name); } };
 $("#bMore").onclick=()=>{ const n=$("#sNarr"); n.classList.toggle("clamp"); $("#bMore").textContent=n.classList.contains("clamp")?"Leer todo ▾":"Mostrar menos ▴"; };
 $("#bAns").onclick=()=>{ $("#sAns").classList.remove("hidden"); $("#bAns").classList.add("hidden"); };
 $("#bList").onclick=()=>{ view=view==="list"?"guide":"list"; render(); window.scrollTo({top:0}); };
@@ -372,5 +435,5 @@ $("#go").onclick=()=>{
   const s=STOPS[idx];
   if(!told["intro"]){ markTold("intro"); say(`${INTRO} Primera parada: ${s.name}. ${s.legDir.replace(/<[^>]+>/g,"")} ${(leg.parts[0]||"")}`,"Bienvenida"); leg.next=Math.min(1,leg.parts.length); }
   else legSay(false);
-  startCompass(); keepAwake(); startGeo(); render(); updStoryCount();
+  startCompass(); keepAwake(); startGeo(); render(); updStoryCount(); $("#score").textContent="⭐ "+quizState.score;
 };

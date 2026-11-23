@@ -213,6 +213,24 @@ a{color:inherit}
 .feed .fi{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);font-size:14px;color:var(--mute)}
 .feed .fi b{color:var(--ink);font-weight:700}
 .feed .fi .ic{flex:none}
+
+.chap{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:12px;border-radius:14px;background:var(--card2);border:1px solid var(--line);margin-top:8px}
+.chap .pl{width:40px;height:40px;border-radius:50%;background:var(--gold);color:#22170a;display:flex;align-items:center;justify-content:center;flex:none;font-size:14px}
+.chap.on{border-color:var(--gold);background:rgba(227,178,90,.14)}
+.chap.done .pl{background:var(--ok)}
+.chap b{display:block;font-family:var(--serif);font-size:17px;font-weight:600;line-height:1.15}
+.chap span.s{font-size:12px;color:var(--mute)}
+.qo{display:block;width:100%;text-align:left;padding:12px 14px;border-radius:12px;background:var(--card2);border:1px solid var(--line);margin-top:8px;font-weight:600}
+.qo.ok{background:rgba(140,192,132,.25);border-color:var(--ok)}
+.qo.no{background:rgba(226,96,79,.2);border-color:var(--bad)}
+.box.quiz{background:linear-gradient(135deg,rgba(74,163,255,.14),rgba(74,163,255,.03));border-color:rgba(74,163,255,.3)}
+.poi{width:22px;height:22px;border-radius:7px;background:#fff;color:#3a2d22;border:2px solid #c75b34;display:flex;align-items:center;justify-content:center;font-size:12px;box-shadow:0 3px 8px rgba(0,0,0,.35)}
+.poi.d{opacity:.55}
+.leaflet-popup-content-wrapper{background:#221a14;color:#f7efe4;border-radius:14px}
+.leaflet-popup-tip{background:#221a14}
+.leaflet-popup-content{margin:12px 14px;font-family:var(--sans);font-size:13.5px;line-height:1.45}
+.leaflet-popup-content b{font-family:var(--serif);font-size:16px;color:#f3cf86}
+.leaflet-popup-content button{margin-top:8px;background:#e3b25a;color:#22170a;border-radius:10px;padding:7px 12px;font-weight:700}
 </style>
 </head>
 <body>
@@ -266,7 +284,7 @@ a{color:inherit}
     <div class="tb-row">
       <button class="tb-title" id="home">Toledo a pie</button>
       <div class="tb-right">
-        <span class="pill" id="clock">--:--</span>
+        <span class="pill" id="score">⭐ 0</span><span class="pill" id="clock">--:--</span>
         <span class="pill" id="gps">GPS…</span>
         <button class="iconbtn" id="bList" aria-label="Recorrido">☰</button>
         <button class="iconbtn" id="bSet" aria-label="Ajustes">⚙️</button>
@@ -285,6 +303,7 @@ a{color:inherit}
           <div class="mapbtns">
             <button id="bFollow" class="on" aria-label="Seguirme">◎</button>
             <button id="bFit" aria-label="Ver ruta">⤢</button>
+            <button id="bLayer" aria-label="Capa">🛰️</button>
           </div>
         </div>
         <div class="navcard">
@@ -327,6 +346,8 @@ a{color:inherit}
         <div class="narr clamp" id="sNarr"></div>
         <button class="more" id="bMore">Leer todo ▾</button>
       </div>
+      <div class="box" id="chapBox"><h3>📚 Más historias de este lugar</h3><div id="chapList"></div></div>
+      <div class="box quiz" id="quizBox"><h3>🧠 Trivia · <span id="quizPts"></span></h3><div id="quizQ" style="font-weight:700;margin-bottom:8px"></div><div id="quizO"></div><div id="quizR" class="ans hidden"></div></div>
       <div class="box reto"><h3>🎯 Reto</h3><div id="sRetoTxt"></div><button class="more" id="bAns">Ver respuesta</button><div class="ans hidden" id="sAns"></div></div>
       <div class="box"><h3>💡 Datos prácticos</h3><div id="sTipTxt" style="color:var(--mute);font-size:15px"></div></div>
       <div class="btns" style="margin-top:14px"><button class="btn gold full" id="bNext"></button></div>
@@ -655,6 +676,140 @@ const FILL = [
  {id:"capital", t:"Hasta 1561, Toledo fue la ciudad más importante de Castilla y sede habitual de la corte. Ese año, Felipe Segundo fijó la capital en Madrid. Toledo perdió poder, pero ganó algo: al no crecer, se conservó casi intacta. Por eso hoy pueden caminar una ciudad medieval de verdad."}
 ];
 
+/* ======================= CAPÍTULOS EXTRA POR PARADA ======================= */
+const CHAPTERS = {
+ bisagra:[
+  {t:"Un circo romano a sus espaldas", x:`Den media vuelta y miren hacia la ciudad nueva. A pocos cientos de metros de aquí, hacia el noroeste, están los restos del circo romano de Toletum. Era una pista enorme, de varios cientos de metros, donde se corrían carreras de cuadrigas, carros tirados por cuatro caballos, ante miles de espectadores.
+
+Imagínense el ruido: los aurigas compitiendo por equipos con colores, como hoy los clubes de fútbol, y apuestas por todos lados. Toledo ya era una ciudad importante mucho antes de los visigodos y los árabes.`},
+  {t:"Las puertas que se cerraban de noche", x:`Durante siglos, las puertas de Toledo se cerraban al anochecer. Quien llegaba tarde, dormía afuera, en las posadas del arrabal.
+
+Y las puertas no solo defendían: también cobraban. Por aquí entraban el vino, el trigo, la lana y el ganado, y en la puerta se pagaba el impuesto de entrada. En el patio de armas, entre las dos fachadas, se controlaba a cada viajero. Si alguien quería meter mercancía sin pagar, este era el lugar donde lo atrapaban.`},
+  {t:"La otra Bisagra, la de verdad", x:`A unos cien metros de aquí, siguiendo la muralla, está la Puerta de Alfonso Sexto, que durante siglos se llamó Bisagra Vieja. Es una puerta de época musulmana, del siglo diez, con un arco de herradura.
+
+La tradición dice que por ella entró Alfonso Sexto en 1085. Y en su interior hay hoy una escultura de Eduardo Chillida, uno de los grandes escultores del siglo veinte. Mil años de distancia entre la piedra y el hierro.`}
+ ],
+ sol:[
+  {t:"Santiago del Arrabal y el predicador", x:`La iglesia de ladrillo que acaban de pasar, Santiago del Arrabal, es del siglo trece y una de las joyas del mudéjar toledano. Fíjense en su torre: parece un alminar, la torre de una mezquita.
+
+Según la tradición, en su púlpito predicó San Vicente Ferrer, un fraile valenciano famosísimo en su época, cuyos sermones arrastraban multitudes. Sus predicaciones, a comienzos del siglo quince, endurecieron mucho la presión sobre judíos y musulmanes. La convivencia de Toledo empezaba a resquebrajarse.`},
+  {t:"Ciudad de murallas", x:`Toledo no tiene una muralla, tiene varias. Hay tramos romanos, visigodos, musulmanes y cristianos, uno encima del otro.
+
+Por el sur y el este, el río Tajo hacía de foso natural. Por eso las grandes puertas, Bisagra, Alfonso Sexto, Puerta del Sol, están todas aquí, en el norte: era el único lado por donde se podía llegar a pie llano. Si un ejército quería tomar Toledo, tenía que venir por aquí, cuesta arriba, bajo las flechas.`}
+ ],
+ cristo:[
+  {t:"La puerta del maestro", x:`Muy cerca de la mezquita está la Puerta de Valmardón, una de las más antiguas de la ciudad. Su nombre viene del árabe Bab al-Mardum. Por aquí pasaba el camino que subía hacia el corazón de la medina.
+
+Miren el arco: está hecho en piedra y ladrillo, y por él pasaron musulmanes, cristianos y judíos durante más de mil años. Es una de esas puertas por las que entra la gente sin saber que está atravesando la historia.`},
+  {t:"Mezquita, iglesia, capilla", x:`Esta mezquita sobrevivió precisamente porque dejó de ser mezquita. Tras la conquista se entregó a la Orden de San Juan, y se convirtió en capilla cristiana. Muchas otras mezquitas de Toledo fueron derribadas para construir iglesias nuevas. Esta, en cambio, quedó casi intacta, con sus nueve bóvedas.
+
+Es una paradoja que se repite por toda la ciudad: lo que se conservó, se conservó porque cambió de dueño.`}
+ ],
+ zoco:[
+  {t:"Autos de fe", x:`Esta plaza alegre tuvo también días muy oscuros. Toledo tenía uno de los tribunales más importantes de la Inquisición, y aquí se celebraban autos de fe: ceremonias públicas en las que se leían las condenas a los acusados de herejía, muchas veces conversos, es decir judíos o musulmanes convertidos al cristianismo a los que se acusaba de seguir practicando su religión en secreto.
+
+Las mismas piedras vieron corridas de toros, mercados y fiestas, y también estas escenas. Zocodover es la memoria completa de Toledo, la luminosa y la oscura.`},
+  {t:"El mazapán y la leyenda de las monjas", x:`¿Por qué Toledo es la capital del mazapán? Dice la leyenda que, en tiempos de hambre, las monjas del convento de San Clemente solo tenían almendras y azúcar en sus despensas, y con eso amasaron un pan dulce para alimentar a la gente. Pan de maza, mazapán.
+
+Sea leyenda o no, el mazapán toledano hoy tiene indicación geográfica protegida, y los conventos todavía lo hacen. Si les tienta, más adelante, en la calle de Santo Tomé, tienen uno de los obradores más famosos de la ciudad.`}
+ ],
+ alcazar:[
+  {t:"El agua que subía sola", x:`Toledo tuvo siempre un problema: está arriba de una roca, y el agua está abajo, en el Tajo. Durante siglos, el agua la subían aguadores con burros, cuesta arriba, cántaro por cántaro.
+
+En el siglo dieciséis, Juanelo Turriano, el relojero de Carlos Quinto, construyó un artificio de cucharas y brazos de madera, movido por la fuerza del río, que subía el agua hasta aquí, al Alcázar. Fue considerado una maravilla de la ingeniería de su época. Lamentablemente, de él solo quedan algunos restos junto al río.`},
+  {t:"Asómense al mirador", x:`Si tienen dos minutos, rodeen el Alcázar hacia el sur, hasta el mirador. Desde ahí ven el Tajo encajonado entre rocas, el puente de Alcántara y los cerros del otro lado del río, salpicados de cigarrales: casas de campo con huertas y olivos donde la nobleza toledana iba a descansar.
+
+Es una de las vistas menos conocidas y más bonitas de Toledo.`}
+ ],
+ catedral:[
+  {t:"Los sombreros que cuelgan del techo", x:`Dentro de la catedral, busquen esto: sombreros rojos colgando del techo, sobre algunas tumbas. Son capelos, los sombreros de los cardenales enterrados debajo.
+
+La tradición dice que el capelo se cuelga sobre la tumba y se deja ahí hasta que se pudre y cae. Y cuando cae, significa que el alma del cardenal ya llegó al cielo. Algunos llevan siglos colgados. Saquen sus propias conclusiones.`},
+  {t:"Una misa de hace mil quinientos años", x:`En la catedral hay una capilla única en el mundo: la Capilla Mozárabe. Ahí se sigue celebrando, todos los días, la misa en rito mozárabe, una liturgia visigoda que los cristianos de Toledo mantuvieron durante los siglos de dominio musulmán.
+
+Cuando Roma impuso el rito romano, el rito mozárabe estuvo a punto de desaparecer. El cardenal Cisneros, a comienzos del siglo dieciséis, fundó esta capilla para salvarlo. Es una de las liturgias cristianas vivas más antiguas de Occidente.`},
+  {t:"La campana que nunca sonó bien", x:`En la torre de la catedral cuelga La Gorda, una campana enorme del siglo dieciocho, de varias toneladas. Cuenta la historia que, al poco de instalarla, se rajó, y desde entonces no se toca como debería.
+
+Si alcanzan a ver la torre desde la plaza, piensen que ahí arriba, a unos noventa metros, hay una campana más pesada que un camión, en silencio desde hace más de dos siglos.`}
+ ],
+ santotome:[
+  {t:"El pleito del cuadro", x:`El Entierro del señor de Orgaz casi termina en los tribunales. Cuando El Greco lo entregó, el precio se fijaba por tasación, y los tasadores lo valoraron en una cifra que a la parroquia le pareció altísima. Hubo disputa, una segunda tasación, y finalmente el pintor tuvo que aceptar menos de lo que esperaba.
+
+El cuadro que hoy es uno de los más famosos de la historia del arte fue, en su momento, una discusión de dinero entre un artista orgulloso y un párroco ahorrativo.`},
+  {t:"El mazapán de al lado", x:`Al salir, en esta misma calle, está el obrador Santo Tomé, una de las confiterías de mazapán más antiguas de Toledo, del siglo diecinueve. Dicen que guarda una figura humana hecha enteramente de mazapán, con récord Guinness incluido.
+
+Si quieren llevarse un recuerdo comestible, este es el lugar. Las figuritas de mazapán rellenas, con forma de anguila o de pez, son un clásico de la Navidad toledana.`}
+ ],
+ transito:[
+  {t:"El mirador de la judería", x:`A pocos pasos de aquí está el mirador del Paseo del Tránsito. Asómense: abajo corre el Tajo, encajonado, y enfrente se ven los cigarrales en los cerros.
+
+La judería ocupaba toda esta zona, en el borde de la ciudad sobre el río. Era un barrio amurallado dentro de la ciudad amurallada, con sus propias puertas. Y aquí, junto al barranco, vivían algunas de las familias más ricas e influyentes de Castilla.`},
+  {t:"La casa de El Greco", x:`El edificio que tienen al lado es el Museo de El Greco. No es exactamente su casa: él vivió en esta zona, en unas casas que alquilaba al marqués de Villena, pero no en este edificio concreto. A comienzos del siglo veinte, el marqués de la Vega-Inclán recreó aquí una casa toledana de la época para homenajearlo.
+
+Adentro está el Apostolado, la serie de retratos de Cristo y los apóstoles, y la famosa Vista y plano de Toledo. Hoy lunes está cerrado, pero ya tienen una excusa para volver.`}
+ ],
+ blanca:[
+  {t:"La judía de Toledo", x:`Esta sinagoga se construyó en tiempos de Alfonso Octavo, a fines del siglo doce. Y a ese rey se le atribuye una de las leyendas más famosas de Toledo: su amor por Raquel, una joven judía de la ciudad.
+
+Cuenta la leyenda que el rey se encerró con ella durante siete años, olvidando a su reina y a su reino, hasta que los nobles, hartos, la mataron. La historia inspiró a Lope de Vega y a muchos escritores después. No hay pruebas de que ocurriera, pero Toledo la sigue contando.`},
+  {t:"Las piñas de los capiteles", x:`Miren otra vez los capiteles de las columnas: piñas, volutas, hojas entrelazadas. No hay figuras humanas ni animales. Es una decoración pensada por artesanos de tradición islámica, en un edificio judío, que luego fue iglesia cristiana.
+
+Si se paran en el centro y miran en cualquier dirección, verán arcos y más arcos, como un bosque de piedra blanca. Es un espacio pensado para el silencio. Tómense un minuto así, sin hablar.`}
+ ],
+ sanjuan:[
+  {t:"El mono que toca la flauta", x:`En el claustro hay un reto escondido: entre las decoraciones talladas en piedra, busquen un mono tocando la flauta. Los escultores del gótico se tomaban estas libertades: entre santos y escudos reales, colaban animales, monstruos y escenas cómicas.
+
+Y miren arriba, en el claustro alto: el techo es de madera, con carpintería mudéjar decorada con los emblemas de los Reyes Católicos. Gótico abajo, mudéjar arriba.`},
+  {t:"Saqueado por Napoleón", x:`A comienzos del siglo diecinueve, durante la guerra contra Napoleón, las tropas francesas ocuparon el monasterio y causaron graves daños: incendios, destrucción de la biblioteca y del claustro.
+
+Buena parte de lo que ven hoy fue restaurado a fines del siglo diecinueve y en el siglo veinte. El monasterio que los Reyes Católicos quisieron eterno estuvo a punto de desaparecer.`}
+ ],
+ puente:[
+  {t:"La leyenda de la Cava", x:`Junto al puente, a orillas del río, se ve una torre llamada el Baño de la Cava. Y tiene detrás una de las leyendas más importantes de España.
+
+Dicen que aquí se bañaba Florinda, a quien llamaban la Cava, hija del conde don Julián. El último rey visigodo, don Rodrigo, la vio desde lo alto y se encaprichó con ella, y la deshonró. Su padre, para vengarse, abrió las puertas de la península a los musulmanes del norte de África. Y así, según la leyenda, empezó todo en el año 711.
+
+Es una leyenda, claro. Pero que una ciudad explique la caída de un reino con una historia de un río, un rey y una muchacha, dice mucho de cómo Toledo se cuenta a sí misma.`},
+  {t:"Volar sobre el Tajo", x:`Si escuchan gritos sobre el río, no se asusten: es la tirolina, un cable que cruza el Tajo junto al puente y que permite volar con la ciudad de fondo.
+
+Y si les queda energía, a lo largo del río hay una senda que rodea Toledo por abajo, entre rocas y molinos antiguos. Es otra forma de ver la ciudad: desde el foso que la protegió durante dos mil años.`}
+ ]
+};
+
+/* ======================= TRIVIA POR PARADA ======================= */
+const QUIZ = {
+ bisagra:{q:"¿De qué emperador es el escudo con el águila de dos cabezas?",o:["Felipe Segundo","Carlos Quinto","Alfonso Sexto"],a:1},
+ sol:{q:"¿Qué santo recibe la casulla de manos de la Virgen en el medallón?",o:["San Ildefonso","San Esteban","San Agustín"],a:0},
+ cristo:{q:"¿En qué año se terminó la mezquita del Cristo de la Luz?",o:["711","999","1085"],a:1},
+ zoco:{q:"¿Qué significa, más o menos, Zocodover?",o:["Plaza del rey","Mercado de las bestias","Puerta del río"],a:1},
+ alcazar:{q:"¿Qué arquitecto de El Escorial trabajó también en el Alcázar?",o:["Juan de Herrera","Juan Guas","Narciso Tomé"],a:0},
+ catedral:{q:"¿Qué aniversario celebra la Catedral en 2026?",o:["500 años","650 años","800 años"],a:2},
+ santotome:{q:"¿Quién es el niño que mira hacia nosotros en el cuadro?",o:["El hijo de El Greco","El señor de Orgaz de niño","Un monaguillo anónimo"],a:0},
+ transito:{q:"¿Cómo llamaban los judíos a la península ibérica?",o:["Al-Ándalus","Sefarad","Hispania"],a:1},
+ blanca:{q:"¿Cuántas naves tiene Santa María la Blanca?",o:["Tres","Cinco","Siete"],a:1},
+ sanjuan:{q:"¿Qué cuelga de la fachada de San Juan de los Reyes?",o:["Cadenas de cautivos","Escudos de nobles","Campanas antiguas"],a:0},
+ puente:{q:"Según la leyenda, ¿quién quemó los andamios del puente?",o:["El arzobispo","La mujer del arquitecto","Un soldado enemigo"],a:1}
+};
+
+/* ======================= LUGARES AL PASO (se anuncian al acercarse) ======================= */
+const POIS = [
+ {id:"santiago", n:"Santiago del Arrabal", lat:39.86198, lng:-4.02558, r:40, t:"la iglesia de Santiago del Arrabal. Fíjense en la torre de ladrillo: parece el alminar de una mezquita. Es mudéjar puro, del siglo trece."},
+ {id:"alfonsovi", n:"Puerta de Alfonso VI", lat:39.86229, lng:-4.02619, r:40, t:"la Puerta de Alfonso Sexto, la antigua Bisagra Vieja. Es musulmana, del siglo diez, y por ella dice la tradición que entró el rey conquistador en 1085."},
+ {id:"valmardon", n:"Puerta de Valmardón", lat:39.86085, lng:-4.02439, r:30, t:"la Puerta de Valmardón, una de las más antiguas de la ciudad. Pasen bajo el arco y miren hacia arriba."},
+ {id:"sangre", n:"Arco de la Sangre", lat:39.85945, lng:-4.02096, r:35, t:"el Arco de la Sangre. Crúcenlo un momento: del otro lado está la estatua de Cervantes, casi a ras del suelo, para sacarse una foto con él."},
+ {id:"santacruz", n:"Museo de Santa Cruz", lat:39.85972, lng:-4.02041, r:40, t:"el Museo de Santa Cruz, un antiguo hospital del siglo dieciséis con una fachada plateresca espectacular. Adentro hay cuadros de El Greco y un claustro precioso. Hoy está abierto hasta las seis."},
+ {id:"tornerias", n:"Mezquita de Tornerías", lat:39.85859, lng:-4.02263, r:30, t:"la pequeña mezquita de Tornerías, otra mezquita de barrio que sobrevivió escondida entre casas. Los lunes está cerrada, pero vale la pena saber que está ahí."},
+ {id:"palacio", n:"Palacio Arzobispal", lat:39.85695, lng:-4.02490, r:35, t:"el Palacio Arzobispal, la residencia del arzobispo de Toledo, primado de España. El arco que lo une a la catedral es el Arco de Palacio."},
+ {id:"miradoralcazar", n:"Mirador del Alcázar", lat:39.85703, lng:-4.01966, r:45, t:"el mirador del Alcázar. Si tienen un minuto, acérquense: la vista sobre el Tajo y los cigarrales es de las mejores de Toledo."},
+ {id:"jesuitas", n:"Iglesia de los Jesuitas", lat:39.85828, lng:-4.02614, r:40, t:"la iglesia de los Jesuitas, dedicada a San Ildefonso. Tip: se puede subir a sus torres y desde arriba tienen una de las mejores vistas de los tejados de Toledo. Abre hasta las cinco cuarenta y cinco."},
+ {id:"sanroman", n:"San Román", lat:39.85846, lng:-4.02712, r:35, t:"la iglesia de San Román, hoy Museo de los Concilios y la Cultura Visigoda, con pinturas murales del siglo trece. Los lunes cierra."},
+ {id:"salvador", n:"Iglesia de El Salvador", lat:39.85669, lng:-4.02684, r:35, t:"la iglesia de El Salvador. Fue mezquita antes de ser iglesia, y adentro conserva un pilar visigodo tallado y restos arqueológicos bajo el suelo. También se puede subir a la torre."},
+ {id:"obrador", n:"Obrador Santo Tomé", lat:39.85682, lng:-4.02741, r:25, t:"el obrador Santo Tomé, uno de los mazapanes más famosos de Toledo. Momento ideal para probar uno."},
+ {id:"greco", n:"Museo de El Greco", lat:39.85565, lng:-4.02870, r:35, t:"el Museo de El Greco, que recrea una casa toledana de su época. Hoy lunes está cerrado."},
+ {id:"miradortransito", n:"Mirador del Tránsito", lat:39.85510, lng:-4.02957, r:40, t:"el mirador del Paseo del Tránsito. Asómense a la baranda: el Tajo abajo y los cigarrales enfrente. Hay bancos y baños públicos, por si los necesitan."},
+ {id:"cava", n:"Baño de la Cava", lat:39.85809, lng:-4.03468, r:60, t:"la torre del Baño de la Cava, junto al río. Detrás de ella hay una leyenda sobre el fin del reino visigodo; se la cuento cuando lleguen al puente."}
+];
+
 /* ======================= ESTADO ======================= */
 const $ = s => document.querySelector(s);
 let idx=0, mode="walk", visited={}, pos=null, heading=null, compassOn=false, view="guide";
@@ -697,7 +852,7 @@ function sayUrgent(text){
 }
 function next(){
   if(!queue.length && resumeAfter){ queue=resumeAfter.q; nowLabel=resumeAfter.label; resumeAfter=null; }
-  if(!queue.length){ speaking=false; cur=""; lastSpeechEnd=Date.now(); updatePlayer(); return; }
+  if(!queue.length){ speaking=false; cur=""; lastSpeechEnd=Date.now(); updatePlayer(); setTimeout(onSpeechEnd,1400); return; }
   speaking=true; cur=queue.shift();
   const my=gen, u=new SpeechSynthesisUtterance(cur);
   if(voice){u.voice=voice;u.lang=voice.lang;} else u.lang="es-MX";
@@ -706,7 +861,7 @@ function next(){
   u.onerror=e=>{ if(my===gen && e.error!=="interrupted" && e.error!=="canceled"){ speaking=false; updatePlayer(); } };
   synth.speak(u); updatePlayer();
 }
-function stopVoice(){ hardCancel(); speaking=false; queue=[]; resumeAfter=null; paused=false; lastSpeechEnd=Date.now(); updatePlayer(); }
+function stopVoice(){ chainOn=false; hardCancel(); speaking=false; queue=[]; resumeAfter=null; paused=false; lastSpeechEnd=Date.now(); updatePlayer(); }
 function togglePause(){
   if(!speaking){ if(mode==="stop") say(STOPS[idx].narr,STOPS[idx].name); else legSay(true); return; }
   if(paused){ paused=false; hardCancel(); queue.unshift(cur); next(); }
@@ -744,19 +899,25 @@ function updateMotion(p){
   const maxD = Math.max(0,...track.map(x=>dist(x,p)));
   const was=stationary;
   stationary = span>45000 && maxD<18;
-  if(!stationary && lastPosForWalk){ const d=dist(lastPosForWalk,p); if(d>4&&d<80) walkedSinceSpeech+=d; }
+  if(!stationary && lastPosForWalk){ const d=dist(lastPosForWalk,p); if(d>4&&d<80){ walkedSinceSpeech+=d; walkedSinceInstr+=d; } }
   lastPosForWalk=p;
   if(was!==stationary){ if(stationary) feedAdd("⏸","Parece que se detuvieron. Pauso las historias automáticas hasta que vuelvan a caminar."); else feedAdd("▶","Siguen caminando. Retomo la guía."); }
   const ms=$("#moveState"); ms.textContent = stationary?"⏸ Detenidos · historias en pausa":"🚶 Caminando"; ms.className="pill "+(stationary?"warn":"blue");
 }
 
 /* ======================= MAPA ======================= */
+const LAYERS={}; let curLayer="det"; const poiMarkers={};
+function poiIcon(p){ return L.divIcon({className:"",html:`<div class="poi ${told["poi_"+p.id]?"d":""}">★</div>`,iconSize:[22,22],iconAnchor:[11,11]}); }
 let map=null, meMarker=null, accCircle=null, routeLine=null, ghostLine=null, stopMarkers=[], follow=true;
 function mkIcon(i){ const s=STOPS[i]; const cls = i===idx?"c":(visited[s.id]?"d":""); return L.divIcon({className:"",html:`<div class="mk ${cls}">${visited[s.id]&&i!==idx?"✓":i+1}</div>`,iconSize:[30,30],iconAnchor:[15,15]}); }
 function initMap(){
   if(map||typeof L==="undefined"){ if(typeof L==="undefined") $("#map").innerHTML='<div style="padding:30px;color:#bfae98;text-align:center">No se pudo cargar el mapa. Usen Google Maps.</div>'; return; }
   map=L.map("map",{zoomControl:false,attributionControl:true}).setView([STOPS[idx].lat,STOPS[idx].lng],16);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{maxZoom:20,subdomains:"abcd",attribution:'© OpenStreetMap · © CARTO'}).addTo(map);
+  LAYERS.det=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'© OpenStreetMap'});
+  LAYERS.sat=L.layerGroup([L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:'Esri · Maxar'}),L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",{maxZoom:19,subdomains:"abcd",attribution:'© CARTO'})]);
+  LAYERS.det.addTo(map);
+  POIS.forEach(p=>{ const mk=L.marker([p.lat,p.lng],{icon:poiIcon(p)}).addTo(map); mk.bindPopup(`<b>${p.n}</b><br>${p.t.charAt(0).toUpperCase()+p.t.slice(1)}<br><button data-poi="${p.id}">🎧 Escuchar</button>`); poiMarkers[p.id]=mk; });
+  map.on("popupopen",e=>{ const b=e.popup.getElement().querySelector("button[data-poi]"); if(b) b.onclick=()=>{ const p=POIS.find(x=>x.id===b.dataset.poi); say(p.n+". "+p.t.charAt(0).toUpperCase()+p.t.slice(1),p.n); }; });
   ghostLine=L.polyline(STOPS.map(s=>[s.lat,s.lng]),{color:"#8a6a3a",weight:3,opacity:.5,dashArray:"4 8"}).addTo(map);
   STOPS.forEach((s,i)=>{ const m=L.marker([s.lat,s.lng],{icon:mkIcon(i)}).addTo(map); m.on("click",()=>{ if(i!==idx){ idx=i; mode="walk"; startLeg(); render(); } }); stopMarkers.push(m); });
   map.on("dragstart",()=>{ follow=false; $("#bFollow").classList.remove("on"); });
@@ -770,6 +931,7 @@ function drawMe(){
   const c=document.getElementById("cone"); if(c){ if(heading!=null){ c.style.display="block"; c.style.transform=`rotate(${heading}deg)`; } else c.style.display="none"; }
   if(follow) map.panTo(ll,{animate:true,duration:.6});
 }
+$("#bLayer").onclick=()=>{ if(!map) return; map.removeLayer(LAYERS[curLayer]); curLayer=curLayer==="det"?"sat":"det"; LAYERS[curLayer].addTo(map); $("#bLayer").textContent=curLayer==="det"?"🛰️":"🗺️"; toast(curLayer==="det"?"Mapa detallado":"Vista satélite"); };
 $("#bFollow").onclick=()=>{ follow=!follow; $("#bFollow").classList.toggle("on",follow); if(follow&&pos&&map) map.setView([pos.lat,pos.lng],17); };
 $("#bFit").onclick=()=>{ if(!map) return; follow=false; $("#bFollow").classList.remove("on"); const pts=[[STOPS[idx].lat,STOPS[idx].lng]]; if(pos) pts.push([pos.lat,pos.lng]); if(route&&route.line) route.line.forEach(p=>pts.push([p.lat,p.lng])); map.fitBounds(pts,{padding:[60,60],maxZoom:18}); };
 
@@ -824,17 +986,42 @@ function updateNav(){
   const st=stepText(nx); $("#turnIc").textContent=st.ic; $("#turnTx").textContent=st.tx;
   $("#turnSub").textContent = pos ? `en ${Math.round(dist(pos,nx.loc)/5)*5} m` : "";
 }
+const lc=s=>s.charAt(0).toLowerCase()+s.slice(1);
+let walkedSinceInstr=0;
+function isTurn(st){ return st.type!=="arrive" && st.type!=="depart" && st.modifier && st.modifier!=="straight" && st.type!=="new name"; }
 function checkSteps(){
   if(!route||!pos||route.straight) return;
   const i0=route.steps.findIndex(x=>!x.done); if(i0<0) return;
   for(let i=i0;i<route.steps.length;i++){
-    const st=route.steps[i];
-    if(dist(pos,st.loc)<28){
+    const st=route.steps[i], d=dist(pos,st.loc);
+    if(d<26){
       for(let j=i0;j<=i;j++) route.steps[j].done=true;
-      const isTurn = st.type!=="arrive" && st.modifier && st.modifier!=="straight" && st.type!=="new name";
-      if(isTurn && autoVoice && !stationary) sayUrgent(stepText(st).tx+".");
-      updateNav(); break;
+      if(isTurn(st) && autoVoice && !stationary){ sayUrgent(`Acá, ${lc(stepText(st).tx)}.`); walkedSinceInstr=0; }
+      updateNav(); return;
     }
+  }
+  const st=route.steps[i0], d=dist(pos,st.loc);
+  if(isTurn(st) && !st.pre && d<75 && d>35 && autoVoice && !stationary){ st.pre=true; sayUrgent(`En unos ${Math.round(d/10)*10} metros, ${lc(stepText(st).tx)}.`); walkedSinceInstr=0; }
+}
+const OKS=["Van bien, sigan por esta calle.","Perfecto, sigan así.","Bien encaminados. Sigan derecho.","Todo en orden, sigan por aquí."];
+function reassure(){
+  if(!route||route.straight||!pos||stationary||speaking||paused||!autoVoice) return;
+  if(walkedSinceInstr<170) return;
+  if(distToLine(pos,route.line)>25) return;
+  const nx=route.steps.find(x=>!x.done); let extra="";
+  if(nx && isTurn(nx)){ const d=Math.round(dist(pos,nx.loc)/10)*10; if(d>80) extra=` En unos ${d} metros tendrán que ${lc(stepText(nx).tx).replace("giren","girar")}.`; }
+  const st=curStreet?` por ${curStreet}`:"";
+  say(OKS[Math.floor(Math.random()*OKS.length)].replace("por esta calle",st||"por esta calle")+extra,"Indicación");
+  walkedSinceInstr=0;
+}
+function checkPois(){
+  if(!pos||pos.acc>50||stationary||!autoVoice) return;
+  for(const p of POIS){
+    if(told["poi_"+p.id]) continue;
+    const d=dist(pos,p); if(d>p.r) continue;
+    markTold("poi_"+p.id); if(poiMarkers[p.id]) poiMarkers[p.id].setIcon(poiIcon(p));
+    const rd=d<12?"aquí mismo":relDir(bearing(pos,p));
+    sayUrgent(`Miren, ${rd}: ${p.t}`); feedAdd("★",`<b>${p.n}</b>`); updStoryCount(); walkedSinceSpeech=0; return;
   }
 }
 
@@ -907,6 +1094,36 @@ function autoStories(){
 }
 function updStoryCount(){ $("#storyState").textContent="Historias: "+Object.keys(told).filter(k=>k!=="day").length; }
 
+/* ======================= CAPÍTULOS Y TRIVIA ======================= */
+let chainOn=false;
+let quizState=store.get("toledo_quiz")||{score:0,ans:{}};
+function renderChapters(){
+  const s=STOPS[idx], ch=CHAPTERS[s.id]||[];
+  $("#chapBox").classList.toggle("hidden",!ch.length);
+  $("#chapList").innerHTML=ch.map((c,i)=>`<button class="chap ${told["ch_"+s.id+"_"+i]?"done":""}" data-i="${i}"><span class="pl">${told["ch_"+s.id+"_"+i]?"✓":"▶"}</span><span><b>${c.t}</b><span class="s">~${Math.max(1,Math.round(c.x.split(/\s+/).length/150))} min · capítulo ${i+1}</span></span></button>`).join("");
+  document.querySelectorAll("#chapList .chap").forEach(b=>b.onclick=()=>playChapter(+b.dataset.i));
+}
+function playChapter(i){ const s=STOPS[idx], c=CHAPTERS[s.id][i]; chainOn=true; markTold("ch_"+s.id+"_"+i); say(`${c.t}. ${c.x}`,"📚 "+c.t); renderChapters(); updStoryCount(); }
+function renderQuiz(){
+  const s=STOPS[idx], q=QUIZ[s.id]; $("#quizBox").classList.toggle("hidden",!q); if(!q) return;
+  $("#quizPts").textContent=`${quizState.score} punto${quizState.score===1?"":"s"}`;
+  $("#quizQ").textContent=q.q; const an=quizState.ans[s.id];
+  $("#quizO").innerHTML=q.o.map((o,i)=>`<button class="qo ${an!=null?(i===q.a?"ok":(i===an?"no":"")):""}" data-i="${i}">${["A","B","C"][i]}. ${o}</button>`).join("");
+  $("#quizR").classList.toggle("hidden",an==null); if(an!=null) $("#quizR").textContent= an===q.a?"¡Correcto! +1 punto.":`Era: ${q.o[q.a]}.`;
+  document.querySelectorAll("#quizO .qo").forEach(b=>b.onclick=()=>{ if(quizState.ans[s.id]!=null) return; const i=+b.dataset.i; quizState.ans[s.id]=i; if(i===q.a) quizState.score++; store.set("toledo_quiz",quizState); renderQuiz(); $("#score").textContent="⭐ "+quizState.score; say(i===q.a?"¡Correcto! Un punto para ustedes.":`Casi. La respuesta era: ${q.o[q.a]}.`,"Trivia"); });
+  $("#score").textContent="⭐ "+quizState.score;
+}
+function onSpeechEnd(){
+  if(speaking||paused||!chainOn||!autoVoice||mode!=="stop"||view!=="guide") return;
+  const s=STOPS[idx], ch=CHAPTERS[s.id]||[];
+  const i=ch.findIndex((c,k)=>!told["ch_"+s.id+"_"+k]);
+  if(i>=0){ const c=ch[i]; markTold("ch_"+s.id+"_"+i); say(`Les cuento algo más. ${c.t}. ${c.x}`,"📚 "+c.t); renderChapters(); updStoryCount(); return; }
+  chainOn=false;
+  const q=QUIZ[s.id];
+  if(q && quizState.ans[s.id]==null){ say(`Y ahora, la trivia de esta parada. ${q.q} ¿${q.o.join(", ").replace(/, ([^,]*)$/," o $1")}? Respondan en la pantalla.`,"🧠 Trivia"); }
+  else say("Cuando quieran, toquen Siguiente parada y seguimos caminando.","Guía");
+}
+
 /* ======================= FEED ======================= */
 function feedAdd(ic,html){ const f=$("#feed"); const d=document.createElement("div"); d.className="fi"; d.innerHTML=`<span class="ic">${ic}</span><span>${html} <span style="opacity:.6">· ${hhmm(new Date())}</span></span>`; f.prepend(d); while(f.children.length>5) f.lastChild.remove(); }
 
@@ -961,6 +1178,7 @@ function render(){
     $("#plSub").textContent=`Narración · ~${Math.max(1,Math.round(s.narr.split(/\s+/).length/150))} min`;
     $("#sRetoTxt").textContent=s.reto; $("#sAns").textContent=s.ans; $("#sAns").classList.add("hidden"); $("#bAns").classList.remove("hidden");
     $("#sTipTxt").textContent=s.tip;
+    renderChapters(); renderQuiz();
     $("#bNext").textContent=idx<STOPS.length-1?`Siguiente: ${STOPS[idx+1].name} →`:"🏁 Terminar el recorrido";
   }
   renderList(); refreshMarkers(); updatePlayer(); updateNav(); save();
@@ -980,7 +1198,7 @@ function tick(){
   // llegada (una sola vez por parada)
   if(d < s.r + Math.min(25,(pos.acc||0)/2) && !visited[s.id]){ arrive(true); return; }
   if(d<90 && !announcedNear && !told["near_"+s.id] && autoVoice && !stationary){ announcedNear=true; markTold("near_"+s.id); sayUrgent(`Ya casi llegan a ${s.name}. Unos ${Math.round(d/10)*10} metros.`); }
-  checkSteps(); maybeReroute(); lookupStreet(); autoStories();
+  checkSteps(); checkPois(); maybeReroute(); lookupStreet(); autoStories(); reassure();
 }
 setInterval(()=>{ $("#clock").textContent=hhmm(new Date()); if(!$("#app").classList.contains("hidden")){ if(pos&&mode==="walk"){ updateMotion(pos); autoStories(); } } },5000);
 
@@ -989,7 +1207,7 @@ function arrive(auto){
   mode="stop"; view="guide"; visited[STOPS[idx].id]=true; render();
   if(auto) toast("📍 ¡Llegaron a "+STOPS[idx].name+"!");
   try{ navigator.vibrate&&navigator.vibrate([120,60,120]); }catch(e){}
-  if(!told["stop_"+STOPS[idx].id] || !auto){ markTold("stop_"+STOPS[idx].id); if(autoVoice||!auto) say(STOPS[idx].narr,STOPS[idx].name); }
+  if(!told["stop_"+STOPS[idx].id] || !auto){ markTold("stop_"+STOPS[idx].id); if(autoVoice||!auto){ chainOn=true; say(STOPS[idx].narr,STOPS[idx].name); } }
   window.scrollTo({top:0,behavior:"smooth"});
 }
 function goNext(){
@@ -1002,7 +1220,7 @@ $("#bArrive").onclick=()=>arrive(false);
 $("#bSkip").onclick=()=>{ stopVoice(); visited[STOPS[idx].id]=visited[STOPS[idx].id]||false; goNext(); };
 $("#bNext").onclick=goNext;
 $("#bLeg").onclick=()=>legSay(true);
-$("#bPlay").onclick=()=>{ if(speaking) togglePause(); else say(STOPS[idx].narr,STOPS[idx].name); };
+$("#bPlay").onclick=()=>{ if(speaking) togglePause(); else { chainOn=true; say(STOPS[idx].narr,STOPS[idx].name); } };
 $("#bMore").onclick=()=>{ const n=$("#sNarr"); n.classList.toggle("clamp"); $("#bMore").textContent=n.classList.contains("clamp")?"Leer todo ▾":"Mostrar menos ▴"; };
 $("#bAns").onclick=()=>{ $("#sAns").classList.remove("hidden"); $("#bAns").classList.add("hidden"); };
 $("#bList").onclick=()=>{ view=view==="list"?"guide":"list"; render(); window.scrollTo({top:0}); };
@@ -1029,7 +1247,7 @@ $("#go").onclick=()=>{
   const s=STOPS[idx];
   if(!told["intro"]){ markTold("intro"); say(`${INTRO} Primera parada: ${s.name}. ${s.legDir.replace(/<[^>]+>/g,"")} ${(leg.parts[0]||"")}`,"Bienvenida"); leg.next=Math.min(1,leg.parts.length); }
   else legSay(false);
-  startCompass(); keepAwake(); startGeo(); render(); updStoryCount();
+  startCompass(); keepAwake(); startGeo(); render(); updStoryCount(); $("#score").textContent="⭐ "+quizState.score;
 };
 
 /* ======================= LANDING ======================= */

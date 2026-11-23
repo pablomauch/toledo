@@ -4,7 +4,7 @@
     <div class="tb-row">
       <button class="tb-title" id="home">Toledo a pie</button>
       <div class="tb-right">
-        <span class="pill" id="clock">--:--</span>
+        <span class="pill" id="score">⭐ 0</span><span class="pill" id="clock">--:--</span>
         <span class="pill" id="gps">GPS…</span>
         <button class="iconbtn" id="bList" aria-label="Recorrido">☰</button>
         <button class="iconbtn" id="bSet" aria-label="Ajustes">⚙️</button>
@@ -23,6 +23,7 @@
           <div class="mapbtns">
             <button id="bFollow" class="on" aria-label="Seguirme">◎</button>
             <button id="bFit" aria-label="Ver ruta">⤢</button>
+            <button id="bLayer" aria-label="Capa">🛰️</button>
           </div>
         </div>
         <div class="navcard">
@@ -65,6 +66,8 @@
         <div class="narr clamp" id="sNarr"></div>
         <button class="more" id="bMore">Leer todo ▾</button>
       </div>
+      <div class="box" id="chapBox"><h3>📚 Más historias de este lugar</h3><div id="chapList"></div></div>
+      <div class="box quiz" id="quizBox"><h3>🧠 Trivia · <span id="quizPts"></span></h3><div id="quizQ" style="font-weight:700;margin-bottom:8px"></div><div id="quizO"></div><div id="quizR" class="ans hidden"></div></div>
       <div class="box reto"><h3>🎯 Reto</h3><div id="sRetoTxt"></div><button class="more" id="bAns">Ver respuesta</button><div class="ans hidden" id="sAns"></div></div>
       <div class="box"><h3>💡 Datos prácticos</h3><div id="sTipTxt" style="color:var(--mute);font-size:15px"></div></div>
       <div class="btns" style="margin-top:14px"><button class="btn gold full" id="bNext"></button></div>
