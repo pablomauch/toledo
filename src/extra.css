@@ -1,6 +1,6 @@
 
 /* ===== MAPA ===== */
-.mapwrap{position:relative;border-radius:24px;overflow:hidden;margin-top:4px;border:1px solid var(--line);background:#1a1612}
+.mapwrap{position:relative;isolation:isolate;z-index:0;border-radius:24px;overflow:hidden;margin-top:4px;border:1px solid var(--line);background:#1a1612}
 #map{height:52svh;min-height:320px;width:100%;background:#1a1612}
 .leaflet-container{font-family:var(--sans)}
 .leaflet-control-attribution{font-size:9px!important;background:rgba(20,15,11,.6)!important;color:#9a8a76!important}
@@ -54,3 +54,30 @@
 .leaflet-popup-content{margin:12px 14px;font-family:var(--sans);font-size:13.5px;line-height:1.45}
 .leaflet-popup-content b{font-family:var(--serif);font-size:16px;color:#f3cf86}
 .leaflet-popup-content button{margin-top:8px;background:#e3b25a;color:#22170a;border-radius:10px;padding:7px 12px;font-weight:700}
+
+#ar{position:fixed;inset:0;z-index:3000;background:#000;overflow:hidden}
+#arVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#arLabels{position:absolute;inset:0}
+.arl{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;transition:left .12s linear,top .3s;pointer-events:auto}
+.arl .card{background:rgba(20,15,11,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,236,210,.25);border-radius:14px;padding:7px 11px;text-align:center;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.arl .card b{display:block;font-size:14px;color:#f7efe4}
+.arl .card span{font-size:12px;color:#f3cf86;font-weight:700}
+.arl .stem{width:2px;height:26px;background:linear-gradient(rgba(255,255,255,.7),rgba(255,255,255,0))}
+.arl.main .card{background:rgba(227,178,90,.95);border-color:#fff;padding:10px 14px}
+.arl.main .card b{color:#22170a;font-size:17px;font-family:var(--serif)}
+.arl.main .card span{color:#3a2a10}
+.arl.poi .card{padding:5px 9px}.arl.poi .card b{font-size:12.5px}
+.arl.done{opacity:.55}
+.ar-top{position:absolute;left:12px;right:12px;top:calc(var(--st) + 12px);display:flex;gap:10px;align-items:flex-start}
+.ar-next{flex:1;background:rgba(20,15,11,.8);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-radius:16px;padding:10px 14px;border:1px solid rgba(255,236,210,.18)}
+.ar-next small{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#bfae98;font-weight:700}
+.ar-next b{font-family:var(--serif);font-size:20px;display:block}
+.ar-next span{font-size:13px;color:#f3cf86;font-weight:700}
+#arClose{width:46px;height:46px;border-radius:50%;background:rgba(20,15,11,.8);font-size:18px;border:1px solid rgba(255,236,210,.2)}
+.ar-edge{position:absolute;top:50%;transform:translateY(-50%);width:54px;height:54px;border-radius:50%;background:var(--gold);color:#22170a;display:none;align-items:center;justify-content:center;font-size:22px;font-weight:900;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:pulse 1.2s ease-in-out infinite}
+.ar-edge.left{left:12px}.ar-edge.right{right:12px}
+@keyframes pulse{50%{transform:translateY(-50%) scale(1.12)}}
+.ar-cross{position:absolute;left:50%;top:50%;width:16px;height:16px;margin:-8px;border:2px solid rgba(255,255,255,.5);border-radius:50%}
+.ar-bottom{position:absolute;left:12px;right:12px;bottom:calc(var(--sb) + 14px);background:rgba(20,15,11,.72);border-radius:14px;padding:10px 12px;font-size:12.5px;color:#d9ccb9;text-align:center}
+.li-mark{flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card2);font-size:14px}
+.li-mark.on{background:var(--ok);color:#122}

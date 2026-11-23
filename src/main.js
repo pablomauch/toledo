@@ -316,15 +316,15 @@ function onSpeechEnd(){
 function feedAdd(ic,html){ const f=$("#feed"); const d=document.createElement("div"); d.className="fi"; d.innerHTML=`<span class="ic">${ic}</span><span>${html} <span style="opacity:.6">· ${hhmm(new Date())}</span></span>`; f.prepend(d); while(f.children.length>5) f.lastChild.remove(); }
 
 /* ======================= GPS + BRÚJULA ======================= */
-function startGeo(){
+function startGeo(onFirst){
   if(!("geolocation" in navigator)){ geoFail("Sin GPS en este navegador"); return; }
   try{ navigator.geolocation.watchPosition(p=>{
       const np={lat:p.coords.latitude,lng:p.coords.longitude,acc:p.coords.accuracy};
       const first=!pos; pos=np;
       if(!compassOn && p.coords.heading!=null && !isNaN(p.coords.heading) && p.coords.speed>0.6) heading=p.coords.heading;
       setGps(); updateMotion(pos); drawMe();
-      if(first){ if(map) map.setView([pos.lat,pos.lng],17); if(mode==="walk") computeRoute("new"); }
-      tick();
+      if(first){ if(onFirst) onFirst(pos); if(map) map.setView([pos.lat,pos.lng],17); if(mode==="walk"&&!waitingStart) computeRoute("new"); }
+      if(!waitingStart) tick();
     }, e=>geoFail(e.code===1?"Ubicación denegada":"Sin señal GPS"), {enableHighAccuracy:true,maximumAge:3000,timeout:20000});
   }catch(e){ geoFail("GPS bloqueado aquí"); }
 }
@@ -367,14 +367,15 @@ function render(){
     $("#sRetoTxt").textContent=s.reto; $("#sAns").textContent=s.ans; $("#sAns").classList.add("hidden"); $("#bAns").classList.remove("hidden");
     $("#sTipTxt").textContent=s.tip;
     renderChapters(); renderQuiz();
-    $("#bNext").textContent=idx<STOPS.length-1?`Siguiente: ${STOPS[idx+1].name} →`:"🏁 Terminar el recorrido";
+    { const nx=nextUnvisited(); $("#bNext").textContent=nx>=0?`Siguiente: ${STOPS[nx].name} →`:"🏁 Terminar el recorrido"; }
   }
   renderList(); refreshMarkers(); updatePlayer(); updateNav(); save();
 }
 function renderList(){
   $("#list").innerHTML=STOPS.map((s,i)=>`<button class="it ${visited[s.id]?"done":""} ${i===idx?"cur":""}" data-i="${i}" style="width:100%;text-align:left">
     <div class="th" style="background-image:url('${IMG[s.id]}')"><span class="n">${visited[s.id]?"✓":i+1}</span></div>
-    <div class="nm"><b>${s.name}</b><span>${s.closes==="closed"?"Hoy cerrado · exterior":s.closes?"Cierra "+s.closes:"Exterior"} · ~${s.visit} min</span></div><span style="color:var(--mute)">›</span></button>`).join("");
+    <div class="nm"><b>${s.name}</b><span>${s.closes==="closed"?"Hoy cerrado · exterior":s.closes?"Cierra "+s.closes:"Exterior"} · ~${s.visit} min</span></div><span class="li-mark ${visited[s.id]?"on":""}" data-m="${i}" role="button" style="display:flex;align-items:center;justify-content:center">${visited[s.id]?"✓":"○"}</span></button>`).join("")+`<p class="note">Toquen ○ / ✓ para marcar lo que ya visitaron. Toquen la parada para ir hacia ella.</p>`;
+  document.querySelectorAll("#list .li-mark").forEach(el=>el.onclick=(e)=>{ e.stopPropagation(); const s=STOPS[+el.dataset.m]; visited[s.id]=!visited[s.id]; save(); renderList(); refreshMarkers(); $("#prog").innerHTML=STOPS.map((x,i)=>`<i class="${visited[x.id]?"d":""} ${i===idx?"c":""}"></i>`).join(""); });
   document.querySelectorAll("#list .it").forEach(el=>el.onclick=()=>{ idx=+el.dataset.i; mode="walk"; view="guide"; startLeg(); render(); window.scrollTo({top:0}); });
 }
 function tick(){
@@ -385,6 +386,7 @@ function tick(){
   const s=STOPS[idx], d=dist(pos,s);
   // llegada (una sola vez por parada)
   if(d < s.r + Math.min(25,(pos.acc||0)/2) && !visited[s.id]){ arrive(true); return; }
+  if(pos.acc<45 && !stationary){ const o=STOPS.findIndex((x,i)=>i!==idx && !visited[x.id] && dist(pos,x)<x.r); if(o>=0){ idx=o; startLeg(); toast("¡Pasaron por "+STOPS[o].name+"!"); arrive(true); return; } }
   if(d<90 && !announcedNear && !told["near_"+s.id] && autoVoice && !stationary){ announcedNear=true; markTold("near_"+s.id); sayUrgent(`Ya casi llegan a ${s.name}. Unos ${Math.round(d/10)*10} metros.`); }
   checkSteps(); checkPois(); maybeReroute(); lookupStreet(); autoStories(); reassure();
 }
@@ -398,14 +400,16 @@ function arrive(auto){
   if(!told["stop_"+STOPS[idx].id] || !auto){ markTold("stop_"+STOPS[idx].id); if(autoVoice||!auto){ chainOn=true; say(STOPS[idx].narr,STOPS[idx].name); } }
   window.scrollTo({top:0,behavior:"smooth"});
 }
+function nextUnvisited(){ for(let k=1;k<=STOPS.length;k++){ const j=(idx+k)%STOPS.length; if(!visited[STOPS[j].id]) return j; } return -1; }
 function goNext(){
-  if(idx>=STOPS.length-1){ say("Fin del recorrido. Gracias por caminar Toledo. Que disfruten el atardecer.","Fin"); toast("🏁 ¡Recorrido completo!"); return; }
-  idx++; mode="walk"; startLeg(); render();
+  const nx=nextUnvisited();
+  if(nx<0){ say("Fin del recorrido. Gracias por caminar Toledo. Que disfruten el atardecer.","Fin"); toast("🏁 ¡Recorrido completo!"); return; }
+  idx=nx; mode="walk"; startLeg(); render();
   if(autoVoice) legSay(false); else stopVoice();
   window.scrollTo({top:0,behavior:"smooth"});
 }
 $("#bArrive").onclick=()=>arrive(false);
-$("#bSkip").onclick=()=>{ stopVoice(); visited[STOPS[idx].id]=visited[STOPS[idx].id]||false; goNext(); };
+$("#bSkip").onclick=()=>{ stopVoice(); const keep=idx; const nx=(()=>{ for(let k=1;k<=STOPS.length;k++){ const j=(keep+k)%STOPS.length; if(!visited[STOPS[j].id]&&j!==keep) return j; } return -1; })(); if(nx<0){ toast("No quedan otras paradas"); return; } idx=nx; mode="walk"; startLeg(); render(); if(autoVoice) legSay(false); };
 $("#bNext").onclick=goNext;
 $("#bLeg").onclick=()=>legSay(true);
 $("#bPlay").onclick=()=>{ if(speaking) togglePause(); else { chainOn=true; say(STOPS[idx].narr,STOPS[idx].name); } };
@@ -424,16 +428,86 @@ $("#autoSw").onclick=()=>{ autoVoice=!autoVoice; prefs.auto=autoVoice; store.set
 $("#bTest").onclick=()=>say("Bienvenidos a Toledo, la ciudad de las tres culturas. Así va a sonar su guía durante el paseo.","Prueba de voz");
 
 /* inicio */
-$("#startAt").innerHTML=STOPS.map((s,i)=>`<option value="${i}">${i+1}. ${s.name}</option>`).join("");
+$("#startAt").innerHTML=`<option value="auto">📍 La parada más cercana a mí</option>`+STOPS.map((s,i)=>`<option value="${i}">${i+1}. ${s.name}</option>`).join("");
 const prev=store.get("toledo_state");
-if(prev&&prev.day===today&&prev.idx>0){ const ni = prev.mode==="stop" && prev.idx<STOPS.length-1 ? prev.idx+1 : prev.idx; $("#startAt").value=ni; visited=prev.visited||{}; $("#resumeNote").textContent=`↺ Retoman en: ${STOPS[ni].name}`; }
+if(prev&&prev.day===today){ visited=prev.visited||{}; }
+const nVis=Object.values(visited).filter(Boolean).length;
+if(nVis) $("#resumeNote").textContent=`✓ Ya visitaron ${nVis} de ${STOPS.length}. Seguimos por la más cercana que les falte.`;
+let waitingStart=false;
+function firstUnvisited(){ const i=STOPS.findIndex(s=>!visited[s.id]); return i<0?0:i; }
+function nearestUnvisited(p){ let best=-1,bd=Infinity; STOPS.forEach((s,i)=>{ if(visited[s.id]) return; const d=dist(p,s); if(d<bd){bd=d;best=i;} }); return best<0?firstUnvisited():best; }
+function beginLeg(intro){
+  mode="walk"; startLeg(); render();
+  const s=STOPS[idx];
+  const txt=`${intro?INTRO+" ":""}${Object.values(visited).filter(Boolean).length?"Ya tengo anotado lo que visitaron. ":""}Vamos a ${s.name}. ${s.legDir.replace(/<[^>]+>/g,"")} ${(leg.parts[0]||"")}`;
+  say(txt,"Camino a "+s.name); leg.next=Math.min(1,leg.parts.length); markTold("leg_"+s.id+"_0");
+}
 $("#go").onclick=()=>{
-  idx=+$("#startAt").value; mode="walk"; view="guide";
+  const v=$("#startAt").value; view="guide";
   $("#landing").classList.add("hidden"); $("#app").classList.remove("hidden"); $("#player").classList.remove("hidden");
   window.scrollTo({top:0});
-  initMap(); startLeg();
-  const s=STOPS[idx];
-  if(!told["intro"]){ markTold("intro"); say(`${INTRO} Primera parada: ${s.name}. ${s.legDir.replace(/<[^>]+>/g,"")} ${(leg.parts[0]||"")}`,"Bienvenida"); leg.next=Math.min(1,leg.parts.length); }
-  else legSay(false);
-  startCompass(); keepAwake(); startGeo(); render(); updStoryCount(); $("#score").textContent="⭐ "+quizState.score;
+  initMap(); startCompass(); keepAwake();
+  const intro=!told["intro"]; markTold("intro");
+  if(v==="auto"){
+    idx=firstUnvisited(); waitingStart=true; mode="walk"; render();
+    say("Un segundo, estoy buscando dónde están para elegir la parada más cercana.","Ubicándolos");
+    const fallback=setTimeout(()=>{ if(waitingStart){ waitingStart=false; toast("Sin ubicación: empezamos por "+STOPS[idx].name); beginLeg(intro); } },9000);
+    startGeo((p)=>{ if(!waitingStart) return; waitingStart=false; clearTimeout(fallback); idx=nearestUnvisited(p); toast("📍 Empezamos por "+STOPS[idx].name+", la más cercana"); beginLeg(intro); if(map) map.setView([p.lat,p.lng],17); });
+  } else {
+    idx=+v; startGeo(); beginLeg(intro);
+  }
+  updStoryCount(); $("#score").textContent="⭐ "+quizState.score;
 };
+
+/* ======================= REALIDAD AUMENTADA ======================= */
+let arOn=false, arStream=null, arHead=null, arRAF=null;
+const FOV=60;
+function smoothHeading(h){ if(h==null) return arHead; if(arHead==null) return arHead=h; let d=((h-arHead+540)%360)-180; arHead=(arHead+d*0.25+360)%360; return arHead; }
+async function openAR(){
+  if(!pos){ toast("Necesito la ubicación para la realidad aumentada"); return; }
+  await startCompass();
+  $("#ar").classList.remove("hidden"); arOn=true;
+  try{ arStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false}); const v=$("#arVideo"); v.srcObject=arStream; await v.play(); }
+  catch(e){ $("#arHint").textContent="No pude abrir la cámara. Revisen el permiso de cámara del navegador."; }
+  if(heading==null) $("#arHint").textContent="No recibo la brújula. En iPhone, al empezar acepten el permiso de movimiento y orientación; si no apareció, recarguen la página.";
+  buildAR(); arLoop();
+}
+function closeAR(){ arOn=false; cancelAnimationFrame(arRAF); if(arStream){ arStream.getTracks().forEach(t=>t.stop()); arStream=null; } $("#ar").classList.add("hidden"); }
+let arItems=[];
+function buildAR(){
+  const box=$("#arLabels"); box.innerHTML=""; arItems=[];
+  const add=(o,kind)=>{ const el=document.createElement("div"); el.className="arl "+kind; el.innerHTML=`<div class="card"><b>${o.name||o.n}</b><span></span></div><div class="stem"></div>`; el.onclick=()=>{ if(kind.includes("poi")){ say((o.n)+". "+o.t.charAt(0).toUpperCase()+o.t.slice(1),o.n); } else { const i=STOPS.indexOf(o); if(i!==idx){ idx=i; startLeg(); render(); toast("Nueva próxima parada: "+o.name); buildAR(); } } }; box.appendChild(el); arItems.push({o,el,kind}); };
+  STOPS.forEach((s,i)=>add(s, i===idx?"main":(visited[s.id]?"stop done":"stop")));
+  POIS.forEach(p=>add(p,"poi"));
+}
+function arLoop(){
+  if(!arOn) return;
+  const h=smoothHeading(heading);
+  const W=innerWidth, H=innerHeight;
+  const s=STOPS[idx]; const ds=pos?dist(pos,s):0;
+  $("#arNext").textContent=s.name; $("#arNextD").textContent=pos?`${ds<1000?Math.round(ds)+" m":(ds/1000).toFixed(1)+" km"} · ${relDir(bearing(pos,s))}`:"";
+  let showL=false, showR=false;
+  const vis=[];
+  arItems.forEach(it=>{
+    const o=it.o; const d=dist(pos,o); const b=bearing(pos,o);
+    const isMain=it.kind==="main";
+    const maxD = isMain?5000 : it.kind.includes("poi")?350:1200;
+    if(h==null||d>maxD){ it.el.style.display="none"; if(isMain&&h==null){} return; }
+    const delta=((b-h+540)%360)-180;
+    if(Math.abs(delta)>FOV/2+4){ it.el.style.display="none"; if(isMain){ if(delta<0) showL=true; else showR=true; } return; }
+    it.el.style.display="flex";
+    const x=W/2 + (delta/(FOV/2))*(W/2);
+    const y=H*0.62 - Math.min(1,Math.log10(Math.max(d,10))/3.2)*H*0.38;
+    vis.push({it,x,y,d,isMain});
+    it.el.querySelector("span").textContent = d<1000?Math.round(d)+" m":(d/1000).toFixed(1)+" km";
+  });
+  // mostrar la próxima parada + los 5 lugares más cercanos, sin superponerse
+  vis.sort((a,b)=>(b.isMain-a.isMain)||(a.d-b.d));
+  const keep=vis.filter(v=>v.isMain).concat(vis.filter(v=>!v.isMain && !v.it.kind.includes("done")).slice(0,5));
+  vis.forEach(v=>{ if(!keep.includes(v)) v.it.el.style.display="none"; });
+  const placed=[];
+  keep.forEach(v=>{ let y=v.isMain?H*0.40:H*0.40+Math.min(1,Math.log10(Math.max(v.d,10))/3)*H*0.18; let guard=0; while(placed.some(p=>Math.abs(p.x-v.x)<130&&Math.abs(p.y-y)<52)&&guard++<8) y+=54; placed.push({x:v.x,y}); v.it.el.style.left=Math.max(70,Math.min(W-70,v.x))+"px"; v.it.el.style.top=Math.min(H-120,y)+"px"; v.it.el.style.zIndex=v.isMain?50:Math.round(40-v.d/100); });
+  $("#arL").style.display=showL?"flex":"none"; $("#arR").style.display=showR?"flex":"none";
+  arRAF=requestAnimationFrame(arLoop);
+}
+$("#bAR").onclick=openAR; $("#bAR2").onclick=openAR; $("#arClose").onclick=closeAR;

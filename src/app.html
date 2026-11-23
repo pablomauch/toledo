@@ -24,6 +24,7 @@
             <button id="bFollow" class="on" aria-label="Seguirme">◎</button>
             <button id="bFit" aria-label="Ver ruta">⤢</button>
             <button id="bLayer" aria-label="Capa">🛰️</button>
+            <button id="bAR" aria-label="Realidad aumentada" style="font-size:12px;font-weight:800">AR</button>
           </div>
         </div>
         <div class="navcard">
@@ -44,6 +45,7 @@
         <div class="btns">
           <a class="btn" id="bMaps" target="_blank" rel="noopener">🗺️ Google Maps</a>
           <button class="btn" id="bLeg">🎧 Contame</button>
+          <button class="btn terra full" id="bAR2">📷 Ver con la cámara (realidad aumentada)</button>
           <button class="btn gold full" id="bArrive">📍 Llegamos</button>
         </div>
         <p class="note" id="manualNote"></p>
@@ -83,4 +85,17 @@
   <div class="np"><b id="npT">Listo</b><span id="npS"></span></div>
   <button class="pbtn" id="pBack" aria-label="Repetir frase">↺</button>
   <button class="pbtn" id="pStop" aria-label="Detener">■</button>
+</div>
+
+<!-- REALIDAD AUMENTADA -->
+<div id="ar" class="hidden">
+  <video id="arVideo" playsinline muted autoplay></video>
+  <div id="arLabels"></div>
+  <div class="ar-top">
+    <div class="ar-next"><small>Próxima parada</small><b id="arNext"></b><span id="arNextD"></span></div>
+    <button id="arClose" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="ar-edge left" id="arL">◀</div><div class="ar-edge right" id="arR">▶</div>
+  <div class="ar-cross"></div>
+  <div class="ar-bottom" id="arHint">Sostengan el teléfono vertical y giren despacio. La brújula puede desviarse unos grados entre edificios.</div>
 </div>
